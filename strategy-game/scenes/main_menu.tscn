@@ -1,0 +1,254 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.055, 0.085, 0.097, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.71, 0.58, 0.37, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_primary"]
+bg_color = Color(0.89, 0.72, 0.44, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_primary_hover"]
+bg_color = Color(0.99, 0.81, 0.52, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secondary"]
+bg_color = Color(0.12, 0.18, 0.19, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.29, 0.38, 0.37, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="LeftAccent" type="ColorRect" parent="."]
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 58.0
+offset_top = -191.0
+offset_right = 63.0
+offset_bottom = 28.0
+mouse_filter = 2
+color = Color(0.89, 0.72, 0.44, 1)
+
+[node name="Kicker" type="Label" parent="."]
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 84.0
+offset_top = -193.0
+offset_right = 600.0
+offset_bottom = -165.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.91, 0.73, 0.44, 1)
+theme_override_font_sizes/font_size = 17
+text = "TACTICAL BATTLE SIMULATOR"
+
+[node name="Title" type="Label" parent="."]
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 80.0
+offset_top = -159.0
+offset_right = 680.0
+offset_bottom = -40.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.97, 0.94, 0.85, 1)
+theme_override_font_sizes/font_size = 56
+text = "BATTLE\nFIELD"
+
+[node name="Tagline" type="Label" parent="."]
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 84.0
+offset_top = -14.0
+offset_right = 610.0
+offset_bottom = 66.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.76, 0.84, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+text = "Lead your line. Break theirs."
+
+[node name="Edition" type="Label" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = -54.0
+offset_right = 530.0
+offset_bottom = -25.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.56, 0.68, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "4 SQUADS  /  4 UNIT TYPES  /  ONE BATTLEFIELD"
+
+[node name="MenuCard" type="Panel" parent="."]
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -448.0
+offset_top = -238.0
+offset_right = -48.0
+offset_bottom = 239.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="CardTitle" type="Label" parent="."]
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -408.0
+offset_top = -206.0
+offset_right = -83.0
+offset_bottom = -170.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.88, 0.77, 1)
+theme_override_font_sizes/font_size = 26
+text = "COMMAND CENTER"
+
+[node name="CardRule" type="ColorRect" parent="."]
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -408.0
+offset_top = -162.0
+offset_right = -87.0
+offset_bottom = -160.0
+mouse_filter = 2
+color = Color(0.72, 0.58, 0.35, 0.8)
+
+[node name="MainButtons" type="VBoxContainer" parent="."]
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -408.0
+offset_top = -104.0
+offset_right = -88.0
+offset_bottom = 141.0
+theme_override_constants/separation = 18
+
+[node name="StartButton" type="Button" parent="MainButtons"]
+custom_minimum_size = Vector2(320, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.09, 0.13, 0.15, 1)
+theme_override_colors/font_hover_color = Color(0.09, 0.13, 0.15, 1)
+theme_override_font_sizes/font_size = 23
+theme_override_styles/normal = SubResource("StyleBoxFlat_primary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_primary_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_primary_hover")
+text = "START GAME"
+
+[node name="OptionsButton" type="Button" parent="MainButtons"]
+custom_minimum_size = Vector2(320, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.91, 0.86, 1)
+theme_override_font_sizes/font_size = 21
+theme_override_styles/normal = SubResource("StyleBoxFlat_secondary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_primary_hover")
+text = "OPTIONS"
+
+[node name="QuitButton" type="Button" parent="MainButtons"]
+custom_minimum_size = Vector2(320, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.91, 0.86, 1)
+theme_override_font_sizes/font_size = 21
+theme_override_styles/normal = SubResource("StyleBoxFlat_secondary")
+theme_override_styles/hover = SubResource("StyleBoxFlat_primary_hover")
+text = "QUIT"
+
+[node name="OptionsPanel" type="Panel" parent="."]
+visible = false
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -408.0
+offset_top = -129.0
+offset_right = -88.0
+offset_bottom = 165.0
+mouse_filter = 2
+
+[node name="OptionsTitle" type="Label" parent="OptionsPanel"]
+offset_left = 7.0
+offset_top = 4.0
+offset_right = 312.0
+offset_bottom = 38.0
+theme_override_colors/font_color = Color(0.93, 0.88, 0.77, 1)
+theme_override_font_sizes/font_size = 22
+text = "OPTIONS"
+
+[node name="VolumeLabel" type="Label" parent="OptionsPanel"]
+offset_left = 8.0
+offset_top = 62.0
+offset_right = 235.0
+offset_bottom = 89.0
+theme_override_colors/font_color = Color(0.84, 0.89, 0.85, 1)
+theme_override_font_sizes/font_size = 17
+text = "MASTER VOLUME"
+
+[node name="VolumeValue" type="Label" parent="OptionsPanel"]
+offset_left = 252.0
+offset_top = 62.0
+offset_right = 311.0
+offset_bottom = 89.0
+theme_override_colors/font_color = Color(0.89, 0.72, 0.44, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 2
+text = "80%"
+
+[node name="VolumeSlider" type="HSlider" parent="OptionsPanel"]
+offset_left = 9.0
+offset_top = 98.0
+offset_right = 309.0
+offset_bottom = 132.0
+max_value = 100.0
+step = 1.0
+value = 80.0
+
+[node name="FullscreenCheck" type="CheckButton" parent="OptionsPanel"]
+offset_left = 4.0
+offset_top = 153.0
+offset_right = 309.0
+offset_bottom = 196.0
+theme_override_colors/font_color = Color(0.84, 0.89, 0.85, 1)
+theme_override_font_sizes/font_size = 17
+text = "FULLSCREEN"
+
+[node name="BackButton" type="Button" parent="OptionsPanel"]
+offset_left = 8.0
+offset_top = 226.0
+offset_right = 308.0
+offset_bottom = 281.0
+theme_override_colors/font_color = Color(0.88, 0.91, 0.86, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_secondary")
+text = "BACK"

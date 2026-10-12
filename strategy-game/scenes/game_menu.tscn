@@ -1,0 +1,265 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/game_menu.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.075, 0.11, 0.125, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.82, 0.65, 0.38, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="GameMenu" type="Control"]
+visible = false
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.035, 0.045, 0.9)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Card" type="Panel" parent="Center"]
+custom_minimum_size = Vector2(940, 540)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="Title" type="Label" parent="Center/Card"]
+offset_left = 28.0
+offset_top = 20.0
+offset_right = 700.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(0.95, 0.91, 0.83, 1)
+theme_override_font_sizes/font_size = 29
+text = "BATTLEFIELD  /  COMMAND"
+
+[node name="PhaseNote" type="Label" parent="Center/Card"]
+offset_left = 30.0
+offset_top = 60.0
+offset_right = 850.0
+offset_bottom = 84.0
+theme_override_colors/font_color = Color(0.87, 0.7, 0.42, 1)
+theme_override_font_sizes/font_size = 14
+text = "CHOOSE YOUR FOUR SQUADS · before battle"
+
+[node name="ArmyTab" type="Button" parent="Center/Card"]
+offset_left = 30.0
+offset_top = 103.0
+offset_right = 180.0
+offset_bottom = 143.0
+theme_override_font_sizes/font_size = 17
+toggle_mode = true
+text = "ARMY"
+
+[node name="GuideTab" type="Button" parent="Center/Card"]
+offset_left = 190.0
+offset_top = 103.0
+offset_right = 340.0
+offset_bottom = 143.0
+theme_override_font_sizes/font_size = 17
+toggle_mode = true
+text = "FIELD GUIDE"
+
+[node name="ArmyPage" type="Control" parent="Center/Card"]
+offset_left = 30.0
+offset_top = 160.0
+offset_right = 910.0
+offset_bottom = 462.0
+
+[node name="ArmyHeader" type="Label" parent="Center/Card/ArmyPage"]
+offset_right = 860.0
+offset_bottom = 26.0
+theme_override_colors/font_color = Color(0.65, 0.74, 0.75, 1)
+theme_override_font_sizes/font_size = 14
+text = "SQUAD                  UNIT TYPE                 ROLE                                                        FIELD"
+
+[node name="Rows" type="VBoxContainer" parent="Center/Card/ArmyPage"]
+offset_top = 34.0
+offset_right = 880.0
+offset_bottom = 296.0
+theme_override_constants/separation = 10
+
+[node name="Row0" type="HBoxContainer" parent="Center/Card/ArmyPage/Rows"]
+custom_minimum_size = Vector2(860, 54)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Center/Card/ArmyPage/Rows/Row0"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.72, 0.96, 1)
+theme_override_font_sizes/font_size = 19
+vertical_alignment = 1
+text = "BLUE A"
+
+[node name="Type" type="OptionButton" parent="Center/Card/ArmyPage/Rows/Row0"]
+custom_minimum_size = Vector2(190, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+
+[node name="Role" type="Label" parent="Center/Card/ArmyPage/Rows/Row0"]
+custom_minimum_size = Vector2(410, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.87, 0.84, 1)
+theme_override_font_sizes/font_size = 15
+vertical_alignment = 1
+
+[node name="Select" type="Button" parent="Center/Card/ArmyPage/Rows/Row0"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "SELECT"
+
+[node name="Row1" type="HBoxContainer" parent="Center/Card/ArmyPage/Rows"]
+custom_minimum_size = Vector2(860, 54)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Center/Card/ArmyPage/Rows/Row1"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.72, 0.96, 1)
+theme_override_font_sizes/font_size = 19
+vertical_alignment = 1
+text = "BLUE B"
+
+[node name="Type" type="OptionButton" parent="Center/Card/ArmyPage/Rows/Row1"]
+custom_minimum_size = Vector2(190, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+
+[node name="Role" type="Label" parent="Center/Card/ArmyPage/Rows/Row1"]
+custom_minimum_size = Vector2(410, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.87, 0.84, 1)
+theme_override_font_sizes/font_size = 15
+vertical_alignment = 1
+
+[node name="Select" type="Button" parent="Center/Card/ArmyPage/Rows/Row1"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "SELECT"
+
+[node name="Row2" type="HBoxContainer" parent="Center/Card/ArmyPage/Rows"]
+custom_minimum_size = Vector2(860, 54)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Center/Card/ArmyPage/Rows/Row2"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.72, 0.96, 1)
+theme_override_font_sizes/font_size = 19
+vertical_alignment = 1
+text = "BLUE C"
+
+[node name="Type" type="OptionButton" parent="Center/Card/ArmyPage/Rows/Row2"]
+custom_minimum_size = Vector2(190, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+
+[node name="Role" type="Label" parent="Center/Card/ArmyPage/Rows/Row2"]
+custom_minimum_size = Vector2(410, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.87, 0.84, 1)
+theme_override_font_sizes/font_size = 15
+vertical_alignment = 1
+
+[node name="Select" type="Button" parent="Center/Card/ArmyPage/Rows/Row2"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "SELECT"
+
+[node name="Row3" type="HBoxContainer" parent="Center/Card/ArmyPage/Rows"]
+custom_minimum_size = Vector2(860, 54)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Center/Card/ArmyPage/Rows/Row3"]
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.72, 0.96, 1)
+theme_override_font_sizes/font_size = 19
+vertical_alignment = 1
+text = "BLUE D"
+
+[node name="Type" type="OptionButton" parent="Center/Card/ArmyPage/Rows/Row3"]
+custom_minimum_size = Vector2(190, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+
+[node name="Role" type="Label" parent="Center/Card/ArmyPage/Rows/Row3"]
+custom_minimum_size = Vector2(410, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.87, 0.84, 1)
+theme_override_font_sizes/font_size = 15
+vertical_alignment = 1
+
+[node name="Select" type="Button" parent="Center/Card/ArmyPage/Rows/Row3"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "SELECT"
+
+[node name="GuidePage" type="Control" parent="Center/Card"]
+visible = false
+offset_left = 30.0
+offset_top = 165.0
+offset_right = 910.0
+offset_bottom = 462.0
+
+[node name="GuideText" type="Label" parent="Center/Card/GuidePage"]
+offset_right = 850.0
+offset_bottom = 300.0
+theme_override_colors/font_color = Color(0.87, 0.9, 0.86, 1)
+theme_override_font_sizes/font_size = 18
+text = "SWORDSMAN   Balanced front line. Reliable in melee.\nSPEARMAN     Long reach. Brace to resist a charge.\nAXEMAN         Heavy damage. Breaks tough enemies.\nARCHER           Ranged support. Pressures slow axemen.\n\nClick a blue squad, then hold and drag it to move.\nDrag empty ground to pan. Scroll or use + / − to zoom.\nMove and Target also work by button; right click still gives quick orders."
+
+[node name="ContinueButton" type="Button" parent="Center/Card"]
+offset_left = 640.0
+offset_top = 477.0
+offset_right = 910.0
+offset_bottom = 520.0
+theme_override_font_sizes/font_size = 18
+text = "CONTINUE"
+
+[node name="RestartButton" type="Button" parent="Center/Card"]
+offset_left = 30.0
+offset_top = 477.0
+offset_right = 230.0
+offset_bottom = 520.0
+theme_override_font_sizes/font_size = 16
+text = "RESTART BATTLE"
+
+[node name="MainMenuButton" type="Button" parent="Center/Card"]
+offset_left = 245.0
+offset_top = 477.0
+offset_right = 445.0
+offset_bottom = 520.0
+theme_override_font_sizes/font_size = 16
+text = "MAIN MENU"
