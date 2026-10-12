@@ -44,6 +44,9 @@ func _run() -> void:
 			if sprite == null or sprite.sprite_frames == null or not sprite.visible:
 				_fail("Unit scene has no visible sprite for %s team %d" % [ROLE_NAMES[role], team])
 				return
+			if sprite.texture_filter != CanvasItem.TEXTURE_FILTER_NEAREST:
+				_fail("Pixel-art sprite is not using nearest-neighbor filtering")
+				return
 			var source := sprite.sprite_frames.get_frame_texture(&"idle", 0) as AtlasTexture
 			var expected := "res://assets/units/%s_%s.png" % [ROLE_NAMES[role], "blue" if team == 0 else "red"]
 			if source == null or source.atlas.resource_path != expected:

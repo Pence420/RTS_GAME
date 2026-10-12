@@ -1,6 +1,6 @@
 # Character Visual Phase 1 Implementation Plan
 
-> Implementation record: the image generator produced 1254 × 1254 sheets. The final loader uses three clean cells per animation row because several fourth-column poses clip their cell. The code and tests are the source of truth for the shipped atlas contract.
+> Implementation record: the image generator produced 1254 × 1254 sheets. The final loader uses three clean cells per animation row because several fourth-column poses clip their cell. The character sheets were later restyled into chibi pixel art with nearest-neighbor filtering and no mipmaps. The code and tests are the source of truth for the shipped atlas contract.
 
 **Goal:** Replace procedural soldier art with original, cohesive 2D sprites for five roles and two teams, with idle, walk, and attack animation, while preserving gameplay.
 
