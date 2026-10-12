@@ -375,5 +375,5 @@ func _draw() -> void:
 
 
 func _draw_health_bar() -> void:
-	draw_rect(Rect2(-13, -45, 26, 4), Color("24312e"))
-	draw_rect(Rect2(-12, -44, 24.0 * current_hp / max_hp, 2), Color("a8d47d") if team == 0 else Color("e6aa7a"))
+	draw_rect(Rect2(-13, -54, 26, 4), Color("24312e"))
+	draw_rect(Rect2(-12, -53, 24.0 * current_hp / max_hp, 2), Color("a8d47d") if team == 0 else Color("e6aa7a"))

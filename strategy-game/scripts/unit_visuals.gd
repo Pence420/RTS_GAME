@@ -8,6 +8,8 @@ const TEAMS := ["blue", "red"]
 const ANIMATIONS := [&"idle", &"walk", &"attack"]
 const DEFAULT_COLUMNS := [0, 1, 2]
 const LONG_WEAPON_ATTACK_COLUMNS := [0, 1, 3]
+# The spear and banner extend into adjacent atlas cells in the middle poses.
+const WIDE_ATTACK_COLUMNS := [0, 3, 0]
 
 static var _frames_cache: Dictionary = {}
 
@@ -34,7 +36,12 @@ static func frames_for(unit_type: int, team: int, is_general: bool) -> SpriteFra
 		frames.add_animation(animation)
 		frames.set_animation_loop(animation, row != 2)
 		frames.set_animation_speed(animation, 16.0 if row == 2 else (5.0 if row == 0 else 9.0))
-		var columns: Array = LONG_WEAPON_ATTACK_COLUMNS if row == 2 and (role_index == 1 or role_index == 2) else DEFAULT_COLUMNS
+		var columns: Array = DEFAULT_COLUMNS
+		if row == 2:
+			if role_index == 1 or role_index == 4:
+				columns = WIDE_ATTACK_COLUMNS
+			elif role_index == 2:
+				columns = LONG_WEAPON_ATTACK_COLUMNS
 		for column in columns:
 			var frame := AtlasTexture.new()
 			frame.atlas = texture
