@@ -3,6 +3,7 @@ extends Node2D
 const SQUAD_SCENE: PackedScene = preload("res://scenes/squad.tscn")
 const UNIT_SCENE: PackedScene = preload("res://scenes/unit.tscn")
 const FIELD_SIZE := Vector2(1600, 900)
+const TERRAIN_TEXTURE: Texture2D = preload("res://assets/terrain/battlefield_pixel.png")
 enum PointerMode { SELECT, MOVE, TARGET }
 enum DragAction { PAN, MOVE }
 const DRAG_THRESHOLD := 8.0
@@ -588,75 +589,10 @@ func _select_at(point: Vector2) -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, FIELD_SIZE), Color("738963"))
-	# Broad grass bands and uneven patches keep the field readable at any zoom.
-	for row in range(9):
-		var color := Color("769067") if row % 3 == 0 else Color("71875f")
-		draw_rect(Rect2(0, row * 100, 1600, 100), color)
-	for index in range(32):
-		var center := Vector2(54 + (index * 337) % 1510, 35 + (index * 227) % 805)
-		var width := 45.0 + float(index % 5) * 18.0
-		var shade := Color("587b58", 0.26) if index % 3 == 0 else Color("a0a977", 0.22)
-		draw_colored_polygon(PackedVector2Array([
-			center + Vector2(-width, 0), center + Vector2(-width * 0.35, -12),
-			center + Vector2(width * 0.65, -8), center + Vector2(width, 5),
-			center + Vector2(width * 0.2, 16), center + Vector2(-width * 0.6, 12)
-		]), shade)
-	# The road has a darker lower edge and a pale crown, like a shallow raised path.
-	var road := PackedVector2Array([
-		Vector2(0, 500), Vector2(230, 476), Vector2(460, 505), Vector2(740, 471),
-		Vector2(1000, 493), Vector2(1290, 460), Vector2(1600, 486),
-		Vector2(1600, 568), Vector2(1290, 543), Vector2(1000, 577),
-		Vector2(740, 553), Vector2(460, 587), Vector2(230, 558), Vector2(0, 582)
-	])
-	draw_colored_polygon(road, Color("776f55", 0.54))
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(0, 499), Vector2(230, 475), Vector2(460, 504), Vector2(740, 470),
-		Vector2(1000, 492), Vector2(1290, 459), Vector2(1600, 485),
-		Vector2(1600, 552), Vector2(1290, 528), Vector2(1000, 562),
-		Vector2(740, 538), Vector2(460, 572), Vector2(230, 543), Vector2(0, 566)
-	]), Color("aa9772", 0.59))
-	for index in range(70):
-		var point := Vector2(20 + (index * 271) % 1550, 18 + (index * 191) % 860)
-		var blade := Color("395e46", 0.44) if index % 3 == 0 else Color("b6b98a", 0.42)
-		draw_line(point + Vector2(0, 7), point + Vector2(-3, -3), blade, 2.0)
-		draw_line(point + Vector2(0, 7), point + Vector2(4, 0), blade, 2.0)
-	# Low stones show a lit top and a darker side without blocking commands.
-	for index in range(24):
-		var stone := Vector2(35 + (index * 419) % 1530, 34 + (index * 313) % 810)
-		draw_rect(Rect2(stone + Vector2(2, 6), Vector2(13, 4)), Color("354d47", 0.29))
-		draw_colored_polygon(PackedVector2Array([
-			stone, stone + Vector2(12, -2), stone + Vector2(17, 2),
-			stone + Vector2(14, 6), stone + Vector2(2, 7)
-		]), Color("c0bea2", 0.67))
-		draw_colored_polygon(PackedVector2Array([
-			stone + Vector2(2, 7), stone + Vector2(14, 6),
-			stone + Vector2(14, 10), stone + Vector2(3, 10)
-		]), Color("687165", 0.53))
-	for grove in [
-		Vector2(130, 88), Vector2(312, 64), Vector2(718, 73),
-		Vector2(1230, 82), Vector2(1462, 113), Vector2(94, 822),
-		Vector2(620, 838), Vector2(1050, 829), Vector2(1490, 814)
-	]:
-		_draw_edge_shrub(grove)
-	for edge in range(2):
-		var x := 12.0 if edge == 0 else 1588.0
-		draw_line(Vector2(x, 0), Vector2(x, 900), Color("263d38", 0.35), 3.0)
-	draw_rect(Rect2(Vector2.ZERO, FIELD_SIZE), Color("334b41"), false, 5.0)
+	draw_texture_rect(TERRAIN_TEXTURE, Rect2(Vector2.ZERO, FIELD_SIZE), false)
 	if drag_active and drag_moved and drag_action == DragAction.MOVE and (is_instance_valid(selected_general) or is_instance_valid(selected_squad)):
 		var origin := selected_general.global_position if selected_general != null else selected_squad.get_center()
 		var destination := drag_destination.clamp(Vector2(20, 20), FIELD_SIZE - Vector2(20, 20))
 		draw_line(origin, destination, Color("f4dc93", 0.85), 3.0)
 		draw_arc(destination, 16.0, 0.0, TAU, 24, Color("f4dc93"), 2.0)
 		draw_circle(destination, 4.0, Color("f4dc93"))
-
-
-func _draw_edge_shrub(center: Vector2) -> void:
-	draw_set_transform(center + Vector2(4, 8), 0.0, Vector2(1.35, 0.44))
-	draw_circle(Vector2.ZERO, 20.0, Color(0.18, 0.27, 0.2, 0.26))
-	draw_set_transform(Vector2.ZERO)
-	draw_rect(Rect2(center + Vector2(-2, -4), Vector2(5, 17)), Color("615c3c"))
-	draw_circle(center + Vector2(-10, -8), 11.0, Color("456f50"))
-	draw_circle(center + Vector2(7, -14), 14.0, Color("3d654c"))
-	draw_circle(center + Vector2(0, -22), 13.0, Color("638962"))
-	draw_circle(center + Vector2(-4, -25), 5.0, Color("87a177", 0.78))

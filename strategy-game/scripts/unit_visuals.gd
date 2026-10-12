@@ -10,6 +10,14 @@ const DEFAULT_COLUMNS := [0, 1, 2]
 const LONG_WEAPON_ATTACK_COLUMNS := [0, 1, 3]
 # The spear and banner extend into adjacent atlas cells in the middle poses.
 const WIDE_ATTACK_COLUMNS := [0, 3, 0]
+# Generated animation rows are not evenly spaced; use each role's actual row origins.
+const ROW_STARTS := [
+	[0, 345, 661], # swordsman
+	[0, 360, 712], # spearman
+	[0, 333, 650], # axeman
+	[0, 325, 642], # archer
+	[0, 350, 670], # general
+]
 
 static var _frames_cache: Dictionary = {}
 
@@ -46,7 +54,7 @@ static func frames_for(unit_type: int, team: int, is_general: bool) -> SpriteFra
 			var frame := AtlasTexture.new()
 			frame.atlas = texture
 			frame.filter_clip = true
-			frame.region = Rect2(_cell_start(column), _cell_start(row), CELL_SIZE, CELL_SIZE)
+			frame.region = Rect2(_cell_start(column), ROW_STARTS[role_index][row], CELL_SIZE, CELL_SIZE)
 			frames.add_frame(animation, frame)
 	_frames_cache[cache_key] = frames
 	return frames
