@@ -14,6 +14,7 @@ const GENERAL_RADIUS := 270.0
 const ARCHER_RETREAT_RANGE := 75.0
 const FIELD_BOUNDS := Rect2(20.0, 20.0, 1560.0, 860.0)
 const DEATH_EFFECT = preload("res://scripts/death_effect.gd")
+const UNIT_VISUALS = preload("res://scripts/unit_visuals.gd")
 
 enum State { IDLE, MOVING, CHASING, ATTACKING, HOLDING, ROUTING, DEAD }
 enum Command { HOLD, ADVANCE, CHARGE, DEFEND, FOCUS_TARGET }
@@ -53,7 +54,8 @@ var hit_flash_timer := 0.0
 var shot_trace_timer := 0.0
 var shot_trace_end := Vector2.ZERO
 var attack_fx_timer := 0.0
-var walk_cycle := 0.0
+
+@onready var visual_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 
 func configure_type(value: int) -> void:
@@ -88,6 +90,8 @@ func configure_type(value: int) -> void:
 			attack_range = ATTACK_RANGE
 			attack_interval = ATTACK_INTERVAL
 	current_hp = max_hp
+	if is_node_ready():
+		_configure_visuals()
 	queue_redraw()
 
 
@@ -98,7 +102,16 @@ func get_type_name() -> String:
 func _ready() -> void:
 	destination = global_position
 	add_to_group("team_%d" % team)
+	_configure_visuals()
 	queue_redraw()
+
+
+func _configure_visuals() -> void:
+	visual_sprite.sprite_frames = UNIT_VISUALS.frames_for(unit_type, team, is_general)
+	visual_sprite.visible = visual_sprite.sprite_frames != null
+	visual_sprite.flip_h = team == 1
+	if visual_sprite.visible:
+		visual_sprite.play(&"idle")
 
 
 func _process(delta: float) -> void:
@@ -112,11 +125,22 @@ func _process(delta: float) -> void:
 	if attack_fx_timer > 0.0:
 		attack_fx_timer = maxf(0.0, attack_fx_timer - delta)
 		needs_redraw = true
-	if velocity.length_squared() > 25.0:
-		walk_cycle += delta * 11.0
-		needs_redraw = true
 	if needs_redraw:
 		queue_redraw()
+	visual_sprite.modulate = Color.WHITE.lerp(Color(1.0, 0.65, 0.58), hit_flash_timer / 0.18)
+	_update_visual_animation()
+
+
+func _update_visual_animation() -> void:
+	if visual_sprite.sprite_frames == null:
+		return
+	var wanted: StringName = &"idle"
+	if attack_fx_timer > 0.0:
+		wanted = &"attack"
+	elif velocity.length_squared() > 25.0 or state == State.MOVING or state == State.CHASING or state == State.ROUTING:
+		wanted = &"walk"
+	if visual_sprite.animation != wanted or (wanted != &"attack" and not visual_sprite.is_playing()):
+		visual_sprite.play(wanted)
 
 
 func move_to(point: Vector2) -> void:
@@ -321,13 +345,7 @@ func _find_nearest_enemy() -> BattleUnit:
 
 func _draw() -> void:
 	var facing := 1.0 if team == 0 else -1.0
-	var uniform_color := Color("4d8fb9") if team == 0 else Color("bf6b59")
-	var shadow_color := Color("214760") if team == 0 else Color("743d36")
-	if routing:
-		uniform_color = uniform_color.lerp(Color("999a87"), 0.48)
-	if hit_flash_timer > 0.0:
-		uniform_color = uniform_color.lerp(Color.WHITE, hit_flash_timer / 0.18)
-	# The broad, low ellipse anchors a raised 3/4-view figure to the 2D field.
+	# A soft ground shadow anchors the character sprite to the field.
 	draw_set_transform(Vector2(1, 10), 0.0, Vector2(1.35, 0.38))
 	draw_circle(Vector2.ZERO, 15.0, Color(0.08, 0.16, 0.13, 0.12))
 	draw_circle(Vector2.ZERO, 11.0, Color(0.08, 0.16, 0.13, 0.2))
@@ -338,13 +356,8 @@ func _draw() -> void:
 		draw_set_transform(Vector2(0, 9), 0.0, Vector2(1.0, 0.45))
 		draw_arc(Vector2.ZERO, 21.0, 0.0, TAU, 28, Color("f6df85"), 2.5)
 		draw_set_transform(Vector2.ZERO)
-	var bob := sin(walk_cycle) * 1.4 if velocity.length_squared() > 25.0 else 0.0
-	draw_set_transform(Vector2(0, bob), 0.0, Vector2(facing, 1.0))
-	_draw_soldier(uniform_color, shadow_color)
-	_draw_equipment()
 	if attack_fx_timer > 0.0 and unit_type != UnitType.ARCHER:
-		draw_arc(Vector2(18, -8), 12.0, -1.6, 0.6, 12, Color(1.0, 0.91, 0.62, attack_fx_timer / 0.19), 2.5)
-	draw_set_transform(Vector2.ZERO)
+		draw_arc(Vector2(facing * 18.0, -8), 12.0, -1.6, 0.6, 12, Color(1.0, 0.91, 0.62, attack_fx_timer / 0.19), 2.5)
 	if shot_trace_timer > 0.0:
 		var start := Vector2(facing * 16.0, -8.0)
 		var direction := (shot_trace_end - start).normalized()
@@ -361,56 +374,6 @@ func _draw() -> void:
 		_draw_health_bar()
 
 
-func _draw_soldier(uniform_color: Color, shadow_color: Color) -> void:
-	var metal := Color("bdc5be")
-	var skin := Color("d8bd9a")
-	# Boots and legs are offset under the torso so the figure reads as raised.
-	draw_rect(Rect2(-8, 4, 6, 8), Color("352f2b"))
-	draw_rect(Rect2(2, 4, 6, 8), Color("352f2b"))
-	if is_general:
-		draw_colored_polygon(PackedVector2Array([Vector2(-10, -10), Vector2(3, -11), Vector2(12, 8), Vector2(-12, 13)]), Color("e0b65e"))
-		draw_colored_polygon(PackedVector2Array([Vector2(-8, -9), Vector2(2, -9), Vector2(8, 7), Vector2(-10, 10)]), shadow_color)
-	draw_colored_polygon(PackedVector2Array([Vector2(-10, -10), Vector2(3, -12), Vector2(10, -7), Vector2(10, 4), Vector2(-6, 8), Vector2(-11, 2)]), Color("253337"))
-	draw_colored_polygon(PackedVector2Array([Vector2(-8, -9), Vector2(3, -10), Vector2(8, -6), Vector2(7, 3), Vector2(-5, 6), Vector2(-8, 1)]), uniform_color)
-	draw_colored_polygon(PackedVector2Array([Vector2(-8, -9), Vector2(-2, -10), Vector2(-2, 5), Vector2(-5, 6), Vector2(-8, 1)]), shadow_color)
-	draw_line(Vector2(-6, -1), Vector2(7, -1), Color("e0d0a7", 0.8), 2.0)
-	draw_rect(Rect2(-11, -7, 4, 8), metal if unit_type != UnitType.ARCHER else Color("567158"))
-	# Visible cheek and helmet brim establish the 3/4 viewing angle.
-	draw_colored_polygon(PackedVector2Array([Vector2(-5, -17), Vector2(3, -18), Vector2(7, -14), Vector2(5, -8), Vector2(-3, -7), Vector2(-7, -11)]), Color("293a3d"))
-	draw_rect(Rect2(-4, -15, 9, 7), skin)
-	draw_rect(Rect2(-6, -17, 11, 4), Color("56705c") if unit_type == UnitType.ARCHER else metal)
-	draw_rect(Rect2(-3, -19, 8, 3), Color("7e9879") if unit_type == UnitType.ARCHER else Color("e0e0d0"))
-	draw_rect(Rect2(4, -13, 2, 2), Color("4b4236"))
-	if is_general:
-		draw_rect(Rect2(-4, -21, 8, 3), Color("f2d37c"))
-		draw_rect(Rect2(-1, -25, 3, 4), Color("e3bd61"))
-
-
-func _draw_equipment() -> void:
-	match unit_type:
-		UnitType.SPEARMAN:
-			draw_line(Vector2(8, 9), Vector2(26, -26), Color("6f5139"), 3.0)
-			draw_colored_polygon(PackedVector2Array([Vector2(26, -29), Vector2(22, -20), Vector2(29, -22)]), Color("e0e2d4"))
-			draw_colored_polygon(PackedVector2Array([Vector2(-12, -7), Vector2(-18, -3), Vector2(-16, 7), Vector2(-10, 9)]), Color("adb8ac"))
-		UnitType.AXEMAN:
-			draw_line(Vector2(8, 8), Vector2(22, -18), Color("825b39"), 3.0)
-			draw_colored_polygon(PackedVector2Array([Vector2(17, -21), Vector2(30, -20), Vector2(29, -10), Vector2(18, -13)]), Color("cbd0c8"))
-			draw_rect(Rect2(18, -20, 3, 8), Color("899694"))
-		UnitType.ARCHER:
-			draw_rect(Rect2(-16, -10, 5, 16), Color("705039"))
-			draw_line(Vector2(-13, -12), Vector2(-9, -18), Color("d9c99e"), 2.0)
-			draw_arc(Vector2(18, -5), 12.0, -PI / 2.0, PI / 2.0, 13, Color("c99555"), 3.0)
-			draw_line(Vector2(18, -17), Vector2(18, 7), Color("e8dfc5"), 1.5)
-		_:
-			draw_colored_polygon(PackedVector2Array([Vector2(-11, -9), Vector2(-17, -6), Vector2(-17, 6), Vector2(-11, 9), Vector2(-8, 5), Vector2(-8, -6)]), Color("849398"))
-			draw_line(Vector2(10, 7), Vector2(21, -15), Color("dce0d6"), 3.0)
-			draw_line(Vector2(8, 3), Vector2(16, 7), Color("ad8950"), 2.0)
-	if is_general:
-		draw_line(Vector2(-16, 9), Vector2(-16, -33), Color("e3d2aa"), 2.5)
-		draw_colored_polygon(PackedVector2Array([Vector2(-16, -33), Vector2(-30, -30), Vector2(-29, -19), Vector2(-16, -22)]), Color("f2c969"))
-		draw_line(Vector2(-27, -28), Vector2(-19, -28), Color("855a39"), 1.5)
-
-
 func _draw_health_bar() -> void:
-	draw_rect(Rect2(-13, -30, 26, 4), Color("24312e"))
-	draw_rect(Rect2(-12, -29, 24.0 * current_hp / max_hp, 2), Color("a8d47d") if team == 0 else Color("e6aa7a"))
+	draw_rect(Rect2(-13, -45, 26, 4), Color("24312e"))
+	draw_rect(Rect2(-12, -44, 24.0 * current_hp / max_hp, 2), Color("a8d47d") if team == 0 else Color("e6aa7a"))

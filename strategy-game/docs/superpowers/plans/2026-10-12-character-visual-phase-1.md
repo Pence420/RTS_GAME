@@ -1,6 +1,6 @@
 # Character Visual Phase 1 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> Implementation record: the image generator produced 1254 × 1254 sheets. The final loader uses three clean cells per animation row because several fourth-column poses clip their cell. The code and tests are the source of truth for the shipped atlas contract.
 
 **Goal:** Replace procedural soldier art with original, cohesive 2D sprites for five roles and two teams, with idle, walk, and attack animation, while preserving gameplay.
 
@@ -46,7 +46,7 @@
 **Interfaces:**
 - Produces: `UnitVisuals.frames_for(unit_type: int, team: int, is_general: bool) -> SpriteFrames`
 - Produces: `UnitVisuals.validate_sheet(texture: Texture2D) -> bool`
-- Frame contract: each sheet is 1024 × 1024, with sixteen 256 × 256 transparent cells; rows 0, 1, 2 are idle, walk, attack; row 3 is unused transparent padding; each active row has four frames. Feet are anchored at the same pixel position in every cell. Assets are rendered at about 0.22 scale in Godot.
+- Frame contract: each sheet is 1254 × 1254, laid out as a four-column atlas with 314 × 314 sampled cells. Rows 0, 1, 2 are idle, walk, attack. Three clean frames are sampled per active row; the fourth column is skipped except for selected spear and axe attack poses. Assets are rendered at 0.22 scale in Godot.
 
 - [ ] **Step 1: Generate the ten sheets using the built-in image generation tool.** Generate each role's blue sheet, then generate a red cloth variant using the blue sheet as an edit reference. Save all final PNGs in `assets/units/`. Use this prompt, replacing bracketed role/team descriptions with the exact role and cloth color:
 
@@ -63,7 +63,7 @@ Role descriptions: swordsman = short blade and shield; spearman = long spear; ax
 
 - [ ] **Step 2: Inspect and import every sheet before integration.** Reject or regenerate any sheet with merged cells, inconsistent character identity, clipped weapons, opaque background, foot-anchor drift, illegible team color, or missing attack motion. Verify pixel dimensions with `sips -g pixelWidth -g pixelHeight -g format` and alpha by visual inspection. Run `/Users/joshuats/Downloads/Godot.app/Contents/MacOS/Godot --headless --editor --import --path strategy-game --quit` so the PNGs are available to headless tests.
 
-- [ ] **Step 3: Write a focused loader test.** In `unit_visual_smoke.gd`, load `res://scripts/unit_visuals.gd`; for `team in range(2)` and each of the five roles, assert `frames_for(...)` is not null and has four frames each for `idle`, `walk`, and `attack`. Assert a deliberately invalid 128 × 128 `ImageTexture` fails `validate_sheet()`. Use the existing `SceneTree` test pattern and exit nonzero on failure:
+- [x] **Step 3: Write a focused loader test.** In `unit_visual_smoke.gd`, load `res://scripts/unit_visuals.gd`; for `team in range(2)` and each of the five roles, assert `frames_for(...)` is not null and has three frames each for `idle`, `walk`, and `attack`. Assert a deliberately invalid 128 × 128 `ImageTexture` fails `validate_sheet()`. Use the existing `SceneTree` test pattern and exit nonzero on failure:
 
 ```gdscript
 extends SceneTree
@@ -78,7 +78,7 @@ func _initialize() -> void:
 				quit(1)
 				return
 			for animation in [&"idle", &"walk", &"attack"]:
-				if frames.get_frame_count(animation) != 4:
+			if frames.get_frame_count(animation) != 3:
 					push_error("Wrong frame count: %s" % animation)
 					quit(1)
 					return
@@ -92,19 +92,19 @@ func _initialize() -> void:
 
 - [ ] **Step 4: Run the test red.** Run `/Users/joshuats/Downloads/Godot.app/Contents/MacOS/Godot --headless --path strategy-game --script res://tests/unit_visual_smoke.gd`; expect failure because `UnitVisuals` does not exist yet.
 
-- [ ] **Step 5: Implement `unit_visuals.gd`.** Use a `RefCounted` helper with static methods and a static cache. `validate_sheet()` returns true only for a non-null 1024 × 1024 texture. On invalid/missing assets, `push_error()` and return null; the test gate rejects that build. Core implementation:
+- [x] **Step 5: Implement `unit_visuals.gd`.** Use a `RefCounted` helper with static methods and a static cache. `validate_sheet()` returns true only for a non-null 1254 × 1254 texture. On invalid/missing assets, `push_error()` and return null; the test gate rejects that build. Core implementation:
 
 ```gdscript
 extends RefCounted
 
-const CELL_SIZE := 256
+const CELL_SIZE := 314
 const ROLES := ["swordsman", "spearman", "axeman", "archer", "general"]
 const TEAMS := ["blue", "red"]
 const ANIMATIONS := [&"idle", &"walk", &"attack"]
 static var cache: Dictionary = {}
 
 static func validate_sheet(texture: Texture2D) -> bool:
-	return texture != null and texture.get_size() == Vector2(1024, 1024)
+	return texture != null and texture.get_size() == Vector2(1254, 1254)
 
 static func frames_for(unit_type: int, team: int, is_general: bool) -> SpriteFrames:
 	var role := 4 if is_general else clampi(unit_type, 0, 3)
@@ -123,16 +123,16 @@ static func frames_for(unit_type: int, team: int, is_general: bool) -> SpriteFra
 		frames.add_animation(ANIMATIONS[row])
 		frames.set_animation_loop(ANIMATIONS[row], row != 2)
 		frames.set_animation_speed(ANIMATIONS[row], 18.0 if row == 2 else (6.0 if row == 0 else 9.0))
-		for column in range(4):
+		for column in range(3):
 			var frame := AtlasTexture.new()
 			frame.atlas = texture
-			frame.region = Rect2(column * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+			frame.region = Rect2(floorf(column * 1254.0 / 4.0), floorf(row * 1254.0 / 4.0), CELL_SIZE, CELL_SIZE)
 			frames.add_frame(ANIMATIONS[row], frame)
 	cache[key] = frames
 	return frames
 ```
 
-- [ ] **Step 6: Run the focused test green and commit.** Re-run the command from Step 4 and commit assets, loader, and test with `git commit -m 'Add original animated soldier sprite sheets'`.
+- [x] **Step 6: Run the focused test green and commit.** Re-run the command from Step 4 and commit assets, loader, and test with `git commit -m 'Add original animated soldier sprite sheets'`.
 
 ### Task 2: Unit scene and animation state
 

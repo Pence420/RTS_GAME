@@ -31,6 +31,61 @@ func _run() -> void:
 	if VISUALS.validate_sheet(ImageTexture.create_from_image(invalid)):
 		_fail("Accepted malformed sprite sheet")
 		return
+	var unit_scene: PackedScene = load("res://scenes/unit.tscn")
+	for team in range(2):
+		for role in range(ROLE_NAMES.size()):
+			var unit := unit_scene.instantiate() as BattleUnit
+			unit.team = team
+			unit.is_general = role == 4
+			if not unit.is_general:
+				unit.configure_type(role)
+			root.add_child(unit)
+			var sprite := unit.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+			if sprite == null or sprite.sprite_frames == null or not sprite.visible:
+				_fail("Unit scene has no visible sprite for %s team %d" % [ROLE_NAMES[role], team])
+				return
+			var source := sprite.sprite_frames.get_frame_texture(&"idle", 0) as AtlasTexture
+			var expected := "res://assets/units/%s_%s.png" % [ROLE_NAMES[role], "blue" if team == 0 else "red"]
+			if source == null or source.atlas.resource_path != expected:
+				_fail("Unit scene selected wrong sprite for %s team %d" % [ROLE_NAMES[role], team])
+				return
+			unit.queue_free()
+	await process_frame
+	var actor := unit_scene.instantiate() as BattleUnit
+	actor.team = 0
+	actor.configure_type(BattleUnit.UnitType.SWORDSMAN)
+	root.add_child(actor)
+	var visual := actor.get_node("AnimatedSprite2D") as AnimatedSprite2D
+	actor.state = BattleUnit.State.IDLE
+	actor.velocity = Vector2.ZERO
+	actor.call("_update_visual_animation")
+	if visual.animation != &"idle":
+		_fail("Idle unit did not play idle animation")
+		return
+	actor.state = BattleUnit.State.MOVING
+	actor.velocity = Vector2(80, 0)
+	actor.call("_update_visual_animation")
+	if visual.animation != &"walk":
+		_fail("Moving unit did not play walk animation")
+		return
+	actor.attack_fx_timer = 0.18
+	actor.call("_update_visual_animation")
+	visual.frame = 1
+	actor.call("_update_visual_animation")
+	if visual.animation != &"attack" or visual.frame != 1:
+		_fail("Attack animation restarts on repeated update")
+		return
+	actor.attack_fx_timer = 0.0
+	actor.call("_update_visual_animation")
+	if visual.animation != &"walk":
+		_fail("Attack did not return to movement animation")
+		return
+	actor.configure_type(BattleUnit.UnitType.ARCHER)
+	var changed := visual.sprite_frames.get_frame_texture(&"idle", 0) as AtlasTexture
+	if changed == null or changed.atlas.resource_path != "res://assets/units/archer_blue.png":
+		_fail("Prebattle unit type change did not update sprite")
+		return
+	actor.queue_free()
 	print("Unit visual assets passed: five roles, two teams, three animation states.")
 	quit(0)
 
