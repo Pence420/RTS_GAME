@@ -41,12 +41,12 @@ func _run() -> void:
 	var camera: Camera2D = battle.battle_camera
 	camera.pan_by_screen_delta(Vector2(100000, 0))
 	var half_width := root.size.x / (2.0 * camera.zoom.x)
-	if camera.position.x < half_width - 1.0:
-		_fail("Camera exposes ground outside the left map edge")
+	if camera.position.x < FIELD.VIEW_BOUNDS.position.x + half_width - 1.0:
+		_fail("Camera exposes ground outside the left scenery edge")
 		return
 	camera.pan_by_screen_delta(Vector2(-100000, 0))
-	if camera.position.x > FIELD.SIZE.x - half_width + 1.0:
-		_fail("Camera exposes ground outside the right map edge")
+	if camera.position.x > FIELD.VIEW_BOUNDS.end.x - half_width + 1.0:
+		_fail("Camera exposes ground outside the right scenery edge")
 		return
 	print("Battlefield bounds passed: shared larger map, all four deployment formations, general limits, full battle movement, and camera edges.")
 	quit()

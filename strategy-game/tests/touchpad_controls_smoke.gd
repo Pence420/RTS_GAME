@@ -128,11 +128,11 @@ func _run() -> void:
 	battle._input(mouse_down)
 	camera.pan_by_screen_delta(Vector2(10000, 0))
 	var half_view: float = battle.get_viewport_rect().size.x / (2.0 * camera.zoom.x)
-	if camera.position.x < half_view - 1.0:
+	if camera.position.x < camera.VIEW_BOUNDS.position.x + half_view - 1.0:
 		_fail("Camera pan exposed the empty area left of the battlefield.")
 		return
 	camera.pan_by_screen_delta(Vector2(-10000, 0))
-	if camera.position.x > battle.FIELD_SIZE.x - half_view + 1.0:
+	if camera.position.x > camera.VIEW_BOUNDS.end.x - half_view + 1.0:
 		_fail("Camera pan exposed the empty area right of the battlefield.")
 		return
 	print("Touchpad controls smoke passed: click actions, selected-squad drag move, empty-ground pan, and zoom.")

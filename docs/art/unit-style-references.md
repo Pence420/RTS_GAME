@@ -9,4 +9,4 @@ Research date: 2026-10-13. The user wants visual inspiration before choosing ano
 | [Tiny Swords — Pixel Frog](https://pixelfrog-assets.itch.io/tiny-swords) | Chibi pixel art for 2D RTS | Warrior, lancer and archer readability, animation timing, faction colors, matching terrain and effects. |
 | [MiniFolks — Humans, LYASeeK](https://lyaseek.itch.io/minifhumans) | Small 32×32 pixel characters | Equipment silhouettes and compact animation. Includes versions with and without outlines. |
 
-For the user's current smooth chibi preference, start by comparing huberthart's character designs with Kingdom Rush's battlefield readability. The other two are pixel-art alternatives for comparison. Keep the project fully 2D whichever art direction is chosen.
+The current approved direction is small pixel-art soldiers inspired by MiniFolks Humans and readable terrain inspired by Tiny Swords. The first terrain phase uses actual legacy CC0 Tiny Swords tiles and foliage; current soldier sprites remain until the unit phase. Keep the project fully 2D.

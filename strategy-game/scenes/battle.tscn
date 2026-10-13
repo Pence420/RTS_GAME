@@ -123,7 +123,7 @@ script = ExtResource("11_terrain")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(1200, 700)
-zoom = Vector2(0.8, 0.8)
+zoom = Vector2(0.42, 0.42)
 script = ExtResource("2_camera")
 
 [node name="EnemyAI" type="Node" parent="."]

@@ -15,4 +15,6 @@ A fully 2D medieval tactical battle game built in Godot. Open `strategy-game/pro
 
 The map is 2400×1400. Before battle, the blue outline marks your deployment area; after Start, troops can move across the battlefield.
 
+Terrain uses legacy CC0 Tiny Swords sprites: grass, earth lanes, rocky coastal cliffs, animated shoreline foam, and trees with authored wind frames. Zoom out to see the coastline. See `docs/art/terrain-pixel-phase-1.md` for scope and asset provenance.
+
 Without an explicit order, player soldiers guard their position and fight nearby threats. See `docs/gameplay/direct-orders-and-stances.md` for details.
