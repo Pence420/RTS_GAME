@@ -15,6 +15,7 @@ const ARCHER_RETREAT_RANGE := 75.0
 const FIELD_BOUNDS := Rect2(20.0, 20.0, 1560.0, 860.0)
 const DEATH_EFFECT = preload("res://scripts/death_effect.gd")
 const UNIT_VISUALS = preload("res://scripts/unit_visuals.gd")
+const ATTACK_FOOT_SHIFTS := [14.0, 40.0, 20.0, 19.0, 5.0]
 
 enum State { IDLE, MOVING, CHASING, ATTACKING, HOLDING, ROUTING, DEAD }
 enum Command { HOLD, ADVANCE, CHARGE, DEFEND, FOCUS_TARGET }
@@ -139,6 +140,10 @@ func _update_visual_animation() -> void:
 		wanted = &"attack"
 	elif velocity.length_squared() > 25.0 or state == State.MOVING or state == State.CHASING or state == State.ROUTING:
 		wanted = &"walk"
+	# The attack drawings sit higher on their atlas rows; keep boots anchored.
+	var role_index := 4 if is_general else clampi(unit_type, 0, 3)
+	var attack_foot_shift: float = ATTACK_FOOT_SHIFTS[role_index]
+	visual_sprite.offset = Vector2(0, -85.0 + (attack_foot_shift if wanted == &"attack" else 0.0))
 	if visual_sprite.animation != wanted or (wanted != &"attack" and not visual_sprite.is_playing()):
 		visual_sprite.play(wanted)
 

@@ -31,6 +31,10 @@ func _run() -> void:
 					if frame.region.position.x < 0.0 or frame.region.position.y < 0.0 or frame.region.end.x > frame.atlas.get_width() or frame.region.end.y > frame.atlas.get_height():
 						_fail("Sprite frame extends beyond source atlas")
 						return
+					var visible_bounds := frame.get_image().get_used_rect()
+					if visible_bounds.size.x < 100 or visible_bounds.size.y < 150:
+						_fail("Sprite frame is empty or cropped too tightly for %s %s team %d" % [ROLE_NAMES[role], animation, team])
+						return
 	var invalid := Image.create(128, 128, false, Image.FORMAT_RGBA8)
 	if VISUALS.validate_sheet(ImageTexture.create_from_image(invalid)):
 		_fail("Accepted malformed sprite sheet")

@@ -2,21 +2,29 @@ extends RefCounted
 
 const SHEET_SIZE := 1254
 const GRID_COUNT := 4
-const CELL_SIZE := 314
+const FRAME_WIDTH := 314
+const FRAME_HEIGHT := 380
 const ROLES := ["swordsman", "spearman", "axeman", "archer", "general"]
 const TEAMS := ["blue", "red"]
 const ANIMATIONS := [&"idle", &"walk", &"attack"]
 const DEFAULT_COLUMNS := [0, 1, 2]
-const LONG_WEAPON_ATTACK_COLUMNS := [0, 1, 3]
-# The spear and banner extend into adjacent atlas cells in the middle poses.
-const WIDE_ATTACK_COLUMNS := [0, 3, 0]
-# Generated animation rows are not evenly spaced; use each role's actual row origins.
+# The matte atlases use tall characters and wider spacing between animation rows.
+# General banners start slightly higher than the other silhouettes.
 const ROW_STARTS := [
-	[0, 345, 661], # swordsman
-	[0, 360, 712], # spearman
-	[0, 333, 650], # axeman
-	[0, 325, 642], # archer
-	[0, 350, 670], # general
+	[60, 440, 820], # swordsman
+	[60, 440, 839], # spearman
+	[60, 440, 820], # axeman
+	[60, 440, 820], # archer
+	[45, 440, 830], # general
+]
+# Long weapons and banners cross cell boundaries in the later poses. Repeating the
+# clean ready pose closes the short attack cycle without drawing detached fragments.
+const ATTACK_X_AND_WIDTH := [
+	[[0, 314], [313, 314], [0, 314]], # swordsman
+	[[0, 314], [313, 296], [0, 314]], # spearman
+	[[0, 314], [313, 314], [0, 314]], # axeman
+	[[0, 314], [330, 296], [963, 291]], # archer
+	[[0, 314], [313, 290], [0, 314]], # general
 ]
 
 static var _frames_cache: Dictionary = {}
@@ -44,17 +52,15 @@ static func frames_for(unit_type: int, team: int, is_general: bool) -> SpriteFra
 		frames.add_animation(animation)
 		frames.set_animation_loop(animation, row != 2)
 		frames.set_animation_speed(animation, 16.0 if row == 2 else (5.0 if row == 0 else 9.0))
-		var columns: Array = DEFAULT_COLUMNS
-		if row == 2:
-			if role_index == 1 or role_index == 4:
-				columns = WIDE_ATTACK_COLUMNS
-			elif role_index == 2:
-				columns = LONG_WEAPON_ATTACK_COLUMNS
-		for column in columns:
+		for pose in range(DEFAULT_COLUMNS.size()):
 			var frame := AtlasTexture.new()
 			frame.atlas = texture
 			frame.filter_clip = true
-			frame.region = Rect2(_cell_start(column), ROW_STARTS[role_index][row], CELL_SIZE, CELL_SIZE)
+			if row == 2:
+				var crop: Array = ATTACK_X_AND_WIDTH[role_index][pose]
+				frame.region = Rect2(crop[0], ROW_STARTS[role_index][row], crop[1], FRAME_HEIGHT)
+			else:
+				frame.region = Rect2(_cell_start(DEFAULT_COLUMNS[pose]), ROW_STARTS[role_index][row], FRAME_WIDTH, FRAME_HEIGHT)
 			frames.add_frame(animation, frame)
 	_frames_cache[cache_key] = frames
 	return frames
