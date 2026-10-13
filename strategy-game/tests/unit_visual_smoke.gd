@@ -27,6 +27,10 @@ func _run() -> void:
 					var expected_path := "res://assets/units/%s_%s.png" % [ROLE_NAMES[role], "blue" if team == 0 else "red"]
 					if frame.atlas.resource_path != expected_path:
 						_fail("Wrong sheet for %s team %d" % [ROLE_NAMES[role], team])
+						return
+					if frame.region.position.x < 0.0 or frame.region.position.y < 0.0 or frame.region.end.x > frame.atlas.get_width() or frame.region.end.y > frame.atlas.get_height():
+						_fail("Sprite frame extends beyond source atlas")
+						return
 	var invalid := Image.create(128, 128, false, Image.FORMAT_RGBA8)
 	if VISUALS.validate_sheet(ImageTexture.create_from_image(invalid)):
 		_fail("Accepted malformed sprite sheet")
@@ -44,8 +48,8 @@ func _run() -> void:
 			if sprite == null or sprite.sprite_frames == null or not sprite.visible:
 				_fail("Unit scene has no visible sprite for %s team %d" % [ROLE_NAMES[role], team])
 				return
-			if sprite.texture_filter != CanvasItem.TEXTURE_FILTER_NEAREST:
-				_fail("Pixel-art sprite is not using nearest-neighbor filtering")
+			if sprite.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR:
+				_fail("Smooth sprite is not using linear filtering")
 				return
 			var source := sprite.sprite_frames.get_frame_texture(&"idle", 0) as AtlasTexture
 			var expected := "res://assets/units/%s_%s.png" % [ROLE_NAMES[role], "blue" if team == 0 else "red"]
