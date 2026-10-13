@@ -6,6 +6,10 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	var terrain := load("res://assets/terrain/battlefield_smooth.png") as Texture2D
+	if terrain == null or terrain.get_width() < 1024 or terrain.get_height() < 576 or absf(float(terrain.get_width()) / float(terrain.get_height()) - 16.0 / 9.0) > 0.05:
+		_fail("Smooth battlefield texture is missing or has the wrong size")
+		return
 	root.size = Vector2i(1152, 648)
 	var battle: Node2D = load("res://scenes/battle.tscn").instantiate()
 	root.add_child(battle)

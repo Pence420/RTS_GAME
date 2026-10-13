@@ -3,7 +3,7 @@ extends Node2D
 const SQUAD_SCENE: PackedScene = preload("res://scenes/squad.tscn")
 const UNIT_SCENE: PackedScene = preload("res://scenes/unit.tscn")
 const FIELD_SIZE := Vector2(1600, 900)
-const TERRAIN_TEXTURE: Texture2D = preload("res://assets/terrain/battlefield_pixel.png")
+const TERRAIN_TEXTURE: Texture2D = preload("res://assets/terrain/battlefield_smooth.png")
 enum PointerMode { SELECT, MOVE, TARGET }
 enum DragAction { PAN, MOVE }
 const DRAG_THRESHOLD := 8.0

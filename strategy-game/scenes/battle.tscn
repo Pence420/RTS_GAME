@@ -76,7 +76,7 @@ corner_radius_bottom_left = 5
 
 [node name="Battle" type="Node2D"]
 y_sort_enabled = true
-texture_filter = 1
+texture_filter = 2
 script = ExtResource("1_battle")
 
 [node name="Camera2D" type="Camera2D" parent="."]
