@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle.gd" id="1_battle"]
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="2_camera"]
@@ -9,6 +9,11 @@
 [ext_resource type="Script" path="res://scripts/hud_frame.gd" id="6_frame"]
 [ext_resource type="Texture2D" path="res://assets/ui/menu.svg" id="7_menu_icon"]
 [ext_resource type="Texture2D" path="res://assets/ui/orders.svg" id="8_orders_icon"]
+
+[ext_resource type="Texture2D" path="res://assets/ui/play.svg" id="9_play"]
+[ext_resource type="Texture2D" path="res://assets/ui/battle.svg" id="10_battle_icon"]
+
+[ext_resource type="Script" path="res://scripts/battle_terrain.gd" id="11_terrain"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
 bg_color = Color(0.17, 0.2, 0.15, 1)
@@ -84,10 +89,34 @@ bg_color = Color(0.66, 0.35, 0.29, 1)
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 
+[sub_resource type="StyleBoxEmpty" id="Play_normal"]
+
+[sub_resource type="StyleBoxFlat" id="Play_hover"]
+bg_color = Color(0.27, 0.31, 0.21, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72, 0.69, 0.48, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_left = 28
+corner_radius_bottom_right = 28
+
+[sub_resource type="StyleBoxFlat" id="Play_pressed"]
+bg_color = Color(0.17, 0.22, 0.15, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_left = 28
+corner_radius_bottom_right = 28
+
 [node name="Battle" type="Node2D"]
 y_sort_enabled = true
 texture_filter = 2
 script = ExtResource("1_battle")
+
+[node name="Terrain" type="Node2D" parent="."]
+script = ExtResource("11_terrain")
 
 [node name="GroundEffects" type="Node2D" parent="."]
 
@@ -167,6 +196,7 @@ show_percentage = false
 fill_mode = 1
 
 [node name="Phase" type="Label" parent="CanvasLayer"]
+visible = false
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -42.0
@@ -180,21 +210,30 @@ text = "DEPLOYMENT"
 horizontal_alignment = 1
 
 [node name="StartBattle" type="Button" parent="CanvasLayer"]
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -172.0
-offset_top = 17.0
-offset_right = -18.0
-offset_bottom = 55.0
-theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
-theme_override_colors/font_color = Color(0.15, 0.18, 0.13, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_primary")
-theme_override_styles/hover = SubResource("StyleBoxFlat_primary_hover")
-text = "START BATTLE"
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -28.0
+offset_top = 8.0
+offset_right = 28.0
+offset_bottom = 64.0
+theme_override_styles/normal = SubResource("Play_normal")
+theme_override_styles/hover = SubResource("Play_hover")
+theme_override_styles/pressed = SubResource("Play_pressed")
+theme_override_styles/focus = SubResource("Play_hover")
+icon = ExtResource("9_play")
+icon_alignment = 1
+tooltip_text = "Start battle"
+
+[node name="BattleEmblem" type="TextureRect" parent="CanvasLayer"]
+visible = false
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -14.0
+offset_top = 22.0
+offset_right = 14.0
+offset_bottom = 50.0
+mouse_filter = 2
+texture = ExtResource("10_battle_icon")
 
 [node name="MenuButton" type="Button" parent="CanvasLayer"]
 offset_left = 18.0

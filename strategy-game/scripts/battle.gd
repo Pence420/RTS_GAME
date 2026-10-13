@@ -3,7 +3,6 @@ extends Node2D
 const SQUAD_SCENE: PackedScene = preload("res://scenes/squad.tscn")
 const UNIT_SCENE: PackedScene = preload("res://scenes/unit.tscn")
 const FIELD_SIZE := Vector2(1600, 900)
-const TERRAIN_TEXTURE: Texture2D = preload("res://assets/terrain/battlefield_smooth.png")
 enum PointerMode { SELECT, MOVE, TARGET }
 enum DragAction { PAN, MOVE }
 const DRAG_THRESHOLD := 8.0
@@ -92,6 +91,7 @@ func _ready() -> void:
 	player_general = _spawn_general(0, Vector2(460, 300))
 	enemy_general = _spawn_general(1, Vector2(1140, 300))
 	hud.bind_army(player_squads, player_general)
+	$Terrain.build_scenery(self)
 	for squad in player_squads:
 		squad.set_general(player_general)
 	for squad in enemy_squads:
@@ -167,6 +167,7 @@ func _start_battle() -> void:
 		enemy_general.combat_enabled = true
 	enemy_ai.begin_battle(player_squads, enemy_squads, enemy_general)
 	start_button.hide()
+	$CanvasLayer/BattleEmblem.show()
 	_update_status()
 	_evaluate_battle_result()
 
@@ -603,7 +604,6 @@ func _select_at(point: Vector2) -> void:
 
 
 func _draw() -> void:
-	draw_texture_rect(TERRAIN_TEXTURE, Rect2(Vector2.ZERO, FIELD_SIZE), false)
 	if drag_active and drag_moved and drag_action == DragAction.MOVE and (is_instance_valid(selected_general) or is_instance_valid(selected_squad)):
 		var origin := selected_general.global_position if selected_general != null else selected_squad.get_center()
 		var destination := drag_destination.clamp(Vector2(20, 20), FIELD_SIZE - Vector2(20, 20))

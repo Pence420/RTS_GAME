@@ -6,9 +6,9 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var terrain := load("res://assets/terrain/battlefield_smooth.png") as Texture2D
-	if terrain == null or terrain.get_width() < 1024 or terrain.get_height() < 576 or absf(float(terrain.get_width()) / float(terrain.get_height()) - 16.0 / 9.0) > 0.05:
-		_fail("Smooth battlefield texture is missing or has the wrong size")
+	var terrain := load("res://assets/terrain/grass_tile.png") as Texture2D
+	if terrain == null or terrain.get_width() < 512 or terrain.get_height() != terrain.get_width():
+		_fail("Reusable grass tile is missing or is not a square ground texture")
 		return
 	root.size = Vector2i(1152, 648)
 	var battle: Node2D = load("res://scenes/battle.tscn").instantiate()
@@ -27,6 +27,10 @@ func _run() -> void:
 		return
 	if phase.text != "DEPLOYMENT" or not blue_count.text.contains("40") or not red_count.text.contains("40"):
 		_fail("Deployment header does not show the battle state and army sizes.")
+		return
+	var play: Button = battle.get_node("CanvasLayer/StartBattle")
+	if not play.text.is_empty() or play.icon == null or absf(play.get_global_rect().get_center().x - root.size.x / 2.0) > 1.0:
+		_fail("Start battle should be an icon Play button at the center of the header.")
 		return
 	var safe_top := top.get_global_rect().end.y + 25.0
 	var safe_bottom := dock.get_global_rect().position.y - 12.0
@@ -64,7 +68,7 @@ func _run() -> void:
 		_fail("Focus prompt overflows the selection card.")
 		return
 	battle.get_node("CanvasLayer/StartBattle").emit_signal("pressed")
-	if phase.text != "BATTLE" or battle.get_node("CanvasLayer/StartBattle").visible:
+	if phase.text != "BATTLE" or battle.get_node("CanvasLayer/StartBattle").visible or not battle.get_node("CanvasLayer/BattleEmblem").visible:
 		_fail("Battle header did not update after Start Battle.")
 		return
 	print("HUD smoke passed: safe layout, counters, selection, and phase update.")
