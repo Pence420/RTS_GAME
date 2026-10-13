@@ -66,6 +66,7 @@ func _process(delta: float) -> void:
 func move_to(center: Vector2) -> void:
 	if routing:
 		return
+	_assign_formation_slots(center)
 	var minimum := Vector2.ZERO
 	var maximum := Vector2.ZERO
 	for unit in units:
@@ -75,6 +76,51 @@ func move_to(center: Vector2) -> void:
 	ordered_center = center
 	for unit in units:
 		unit.move_to(center + slots[unit])
+
+
+func _assign_formation_slots(center: Vector2) -> void:
+	var count := units.size()
+	if count == 0:
+		return
+	var offsets: Array[Vector2] = []
+	var mean := Vector2.ZERO
+	for index in range(count):
+		var offset := _slot_for(index)
+		offsets.append(offset)
+		mean += offset
+	mean /= count
+	for index in range(count):
+		offsets[index] -= mean
+	# Exact minimum-travel matching for at most ten soldiers (1024 subsets).
+	# Each destination belongs to one soldier; reforming does not blindly send
+	# old slot numbers through the opposite side of the squad.
+	var costs := PackedFloat64Array()
+	var choices := PackedInt32Array()
+	costs.resize(1 << count)
+	choices.resize(1 << count)
+	costs.fill(INF)
+	costs[0] = 0.0
+	for mask in range(1 << count):
+		var soldier_index := 0
+		for bit in range(count):
+			if mask & (1 << bit):
+				soldier_index += 1
+		if soldier_index == count:
+			continue
+		for slot_index in range(count):
+			if mask & (1 << slot_index):
+				continue
+			var next := mask | (1 << slot_index)
+			var cost := costs[mask] + units[soldier_index].global_position.distance_squared_to(center + offsets[slot_index])
+			if cost < costs[next]:
+				costs[next] = cost
+				choices[next] = slot_index
+	var mask := (1 << count) - 1
+	for soldier_index in range(count - 1, -1, -1):
+		var slot_index := choices[mask]
+		slots[units[soldier_index]] = offsets[slot_index]
+		slot_indices[units[soldier_index]] = slot_index
+		mask ^= 1 << slot_index
 
 
 func begin_battle() -> void:
@@ -184,7 +230,6 @@ func set_formation(value: int) -> void:
 	var center := ordered_center if _has_manual_move() else get_center()
 	formation = value
 	for unit in units:
-		slots[unit] = _slot_for(slot_indices[unit])
 		unit.formation_attack_multiplier = 1.1 if formation == Formation.WEDGE else 1.0
 		unit.formation_damage_taken_multiplier = 0.85 if formation == Formation.SHIELD_WALL else (1.1 if formation == Formation.WEDGE else 1.0)
 		unit.formation_speed_multiplier = 0.8 if formation == Formation.SHIELD_WALL else 1.0

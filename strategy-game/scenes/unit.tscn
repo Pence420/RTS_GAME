@@ -1,11 +1,21 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/unit.gd" id="1_unit"]
 
+[sub_resource type="CircleShape2D" id="BodyShape"]
+radius = 16.0
+
 [node name="Unit" type="CharacterBody2D"]
-collision_layer = 0
-collision_mask = 0
+collision_layer = 1
+collision_mask = 1
+motion_mode = 1
+platform_floor_layers = 0
+safe_margin = 0.08
 script = ExtResource("1_unit")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 8)
+shape = SubResource("BodyShape")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 z_index = 0

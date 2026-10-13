@@ -5,6 +5,9 @@ signal died(unit: BattleUnit)
 signal health_changed(unit: BattleUnit)
 signal escaped(unit: BattleUnit)
 
+const BODY_RADIUS := 16.0
+const PERSONAL_SPACE := 36.0
+
 const MOVE_SPEED := 145.0
 const ARRIVAL_DISTANCE := 0.15
 const DETECTION_RANGE := 230.0
@@ -13,6 +16,7 @@ const ATTACK_INTERVAL := 0.8
 const GENERAL_RADIUS := 270.0
 const ARCHER_RETREAT_RANGE := 75.0
 const FIELD_BOUNDS := Rect2(20.0, 20.0, 1560.0, 860.0)
+const BODY_CONTACTS = preload("res://scripts/body_contacts.gd")
 const DEATH_EFFECT = preload("res://scripts/death_effect.gd")
 const UNIT_VISUALS = preload("res://scripts/unit_visuals.gd")
 const ATTACK_FOOT_SHIFTS := [14.0, 40.0, 20.0, 19.0, 5.0]
@@ -59,6 +63,8 @@ var idle_phase := 0
 var visual_clock := 0.0
 var visual_base_scale := Vector2(0.18, 0.18)
 var idle_foot_y := 0.0
+var blocked_time := 0.0
+var arrival_wait_timer := 0.0
 
 @onready var visual_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -108,6 +114,11 @@ func _ready() -> void:
 	destination = global_position
 	visual_base_scale = visual_sprite.scale
 	add_to_group("team_%d" % team)
+	add_to_group("battle_units")
+	if not get_tree().root.has_meta("body_contact_solver") or not is_instance_valid(get_tree().root.get_meta("body_contact_solver")):
+		var contacts := BODY_CONTACTS.new()
+		get_tree().root.set_meta("body_contact_solver", contacts)
+		get_tree().root.add_child.call_deferred(contacts)
 	_configure_visuals()
 	queue_redraw()
 
@@ -182,6 +193,8 @@ func move_to(point: Vector2) -> void:
 		return
 	destination = point
 	manual_move = true
+	blocked_time = 0.0
+	arrival_wait_timer = 0.0
 	attack_fx_timer = 0.0
 
 
@@ -279,16 +292,23 @@ func _physics_process(delta: float) -> void:
 			queue_free()
 			return
 		velocity = escape_vector.normalized() * move_speed * 1.4
-		move_and_slide()
+		_move_with_bodies(delta)
 		return
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	charge_bonus_timer = maxf(0.0, charge_bonus_timer - delta)
 	if manual_move:
 		state = State.MOVING
 		_move_toward(destination, delta)
-		move_and_slide()
-		if global_position.distance_to(destination) <= ARRIVAL_DISTANCE:
-			global_position = destination
+		_move_with_bodies(delta)
+		var arrived := global_position.distance_to(destination) <= ARRIVAL_DISTANCE
+		if global_position.distance_to(destination) < PERSONAL_SPACE and _destination_occupied():
+			arrival_wait_timer += delta
+		else:
+			arrival_wait_timer = 0.0
+		var occupied := arrival_wait_timer > 0.6
+		if arrived or occupied:
+			if arrived:
+				global_position = destination
 			manual_move = false
 			velocity = Vector2.ZERO
 			state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
@@ -297,7 +317,7 @@ func _physics_process(delta: float) -> void:
 	if not combat_enabled:
 		state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
 		velocity = Vector2.ZERO
-		move_and_slide()
+		_move_with_bodies(delta)
 		return
 	target_scan_timer -= delta
 	if target_scan_timer <= 0.0 or (current_target != null and not _target_is_valid()):
@@ -306,7 +326,7 @@ func _physics_process(delta: float) -> void:
 		target_scan_timer = 0.25
 
 	var threat := _nearby_melee_threat() if unit_type == UnitType.ARCHER and not manual_move and command_mode != Command.HOLD and command_mode != Command.DEFEND else null
-	if _target_is_valid() and global_position.distance_to(current_target.global_position) <= attack_range:
+	if _target_is_valid() and global_position.distance_to(current_target.global_position) <= get_contact_reach():
 		state = State.ATTACKING
 		velocity = Vector2.ZERO
 		if charge_bonus_ready:
@@ -332,7 +352,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
 		velocity = Vector2.ZERO
-	move_and_slide()
+	_move_with_bodies(delta)
 
 
 func _move_toward(point: Vector2, delta: float) -> void:
@@ -345,6 +365,61 @@ func _move_toward(point: Vector2, delta: float) -> void:
 	var accelerating_speed := move_toward(velocity.length(), speed, move_speed * 8.0 * delta)
 	# Limit the final step to the remaining distance, including on slow frames.
 	velocity = offset / distance * minf(accelerating_speed, distance / maxf(delta, 0.0001))
+
+
+func _move_with_bodies(delta: float) -> void:
+	var requested := velocity
+	var steering := Vector2.ZERO
+	var direction := requested.normalized()
+	var side := Vector2(-direction.y, direction.x)
+	for node in get_tree().get_nodes_in_group("battle_units"):
+		var other := node as BattleUnit
+		if other == self or not other.is_alive():
+			continue
+		var offset := other.global_position - global_position
+		var distance := offset.length()
+		if distance > 80.0:
+			continue
+		# A small personal-space buffer settles crowded allies without moving
+		# soldiers that already have comfortable formation spacing.
+		if other.team == team and distance < PERSONAL_SPACE and distance > 0.01:
+			steering -= offset / distance * (PERSONAL_SPACE - distance) * 5.0
+		if requested.length_squared() < 1.0 or other == current_target and not manual_move:
+			continue
+		var ahead := offset.dot(direction)
+		var lateral := offset.dot(side)
+		var lookahead := PERSONAL_SPACE + requested.length() * maxf(0.25, delta * 1.5)
+		if ahead > 0.0 and ahead < lookahead and absf(lateral) < PERSONAL_SPACE:
+			# Both head-on soldiers pass on their own right. Off-centre bodies
+			# are passed on the nearer free side, instead of pushing through.
+			var pass_side := -signf(lateral) if absf(lateral) > 3.0 else 1.0
+			var weight := (1.0 - ahead / lookahead) * (1.0 - absf(lateral) / PERSONAL_SPACE)
+			steering += side * pass_side * requested.length() * weight * 2.5
+	velocity += steering
+	var maximum_speed := move_speed * formation_speed_multiplier * command_speed_multiplier * (1.4 if routing else 1.0)
+	velocity = velocity.limit_length(maximum_speed)
+	var before := global_position
+	move_and_slide()
+	if not routing:
+		global_position = global_position.clamp(FIELD_BOUNDS.position, FIELD_BOUNDS.end)
+	var displacement := global_position - before
+	velocity = displacement / maxf(delta, 0.0001)
+	if requested.length() > 10.0 and velocity.length() < 8.0:
+		blocked_time += delta
+	else:
+		blocked_time = 0.0
+	if blocked_time > 0.6 and state == State.CHASING:
+		current_target = null
+		target_scan_timer = 0.0
+		blocked_time = 0.0
+
+
+func _destination_occupied() -> bool:
+	for node in get_tree().get_nodes_in_group("battle_units"):
+		var other := node as BattleUnit
+		if other != self and other.is_alive() and not other.manual_move and other.global_position.distance_to(destination) < BODY_RADIUS * 2.0:
+			return true
+	return false
 
 
 func _nearby_melee_threat() -> BattleUnit:
@@ -367,7 +442,18 @@ func _retreat_from(enemy: BattleUnit, delta: float) -> void:
 		direction = Vector2.LEFT if team == 0 else Vector2.RIGHT
 	var retreat_point := global_position + direction * 100.0
 	retreat_point = retreat_point.clamp(FIELD_BOUNDS.position, FIELD_BOUNDS.end)
+	if retreat_point.distance_to(global_position) < 4.0:
+		var tangent := Vector2(-direction.y, direction.x)
+		retreat_point = (global_position + tangent * 100.0).clamp(FIELD_BOUNDS.position, FIELD_BOUNDS.end)
+		if retreat_point.distance_to(global_position) < 4.0:
+			retreat_point = (global_position - tangent * 100.0).clamp(FIELD_BOUNDS.position, FIELD_BOUNDS.end)
 	_move_toward(retreat_point, delta)
+
+
+func get_contact_reach() -> float:
+	# A sword can reach the opposing body at contact. Its old centre-based
+	# range must not leave enlarged colliders holding melee attackers apart.
+	return attack_range if unit_type == UnitType.ARCHER else maxf(attack_range, BODY_RADIUS * 2.0 + 3.0)
 
 
 func _target_is_valid() -> bool:
@@ -379,24 +465,32 @@ func _can_keep_target() -> bool:
 		return false
 	if command_mode == Command.FOCUS_TARGET or (command_mode == Command.CHARGE and not focus_targets.is_empty()):
 		return focus_targets.has(current_target)
-	var range_limit := attack_range if command_mode == Command.HOLD or command_mode == Command.DEFEND else maxf(DETECTION_RANGE, attack_range) + 24.0
+	var range_limit := get_contact_reach() if command_mode == Command.HOLD or command_mode == Command.DEFEND else maxf(DETECTION_RANGE, attack_range) + 24.0
 	return global_position.distance_to(current_target.global_position) <= range_limit
 
 
 func _find_nearest_enemy() -> BattleUnit:
 	var closest: BattleUnit
-	var nearest_distance := attack_range if command_mode == Command.HOLD or command_mode == Command.DEFEND else maxf(DETECTION_RANGE, attack_range)
+	var nearest_distance := get_contact_reach() if command_mode == Command.HOLD or command_mode == Command.DEFEND else maxf(DETECTION_RANGE, attack_range)
 	var candidates: Array[Node] = get_tree().get_nodes_in_group("team_%d" % (1 - team))
 	if command_mode == Command.FOCUS_TARGET or (command_mode == Command.CHARGE and not focus_targets.is_empty()):
 		candidates.assign(focus_targets)
 		nearest_distance = INF
+	var range_limit := nearest_distance
+	nearest_distance = INF
+	var claims := {}
+	for ally_node in get_tree().get_nodes_in_group("team_%d" % team):
+		var ally := ally_node as BattleUnit
+		if ally != self and ally._target_is_valid():
+			claims[ally.current_target] = claims.get(ally.current_target, 0) + 1
 	for node in candidates:
 		var enemy := node as BattleUnit
 		if enemy == null or not enemy.is_alive() or enemy.routing:
 			continue
 		var distance := global_position.distance_to(enemy.global_position)
-		if distance < nearest_distance:
-			nearest_distance = distance
+		var score := distance + float(claims.get(enemy, 0)) * 18.0
+		if distance <= range_limit and score < nearest_distance:
+			nearest_distance = score
 			closest = enemy
 	return closest
 

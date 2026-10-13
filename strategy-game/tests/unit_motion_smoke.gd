@@ -53,6 +53,8 @@ func _run() -> void:
 		return
 	actor.combat_enabled = false
 	actor.position = Vector2(500, 450)
+	# Keep the exact-arrival destination clear of the enemy body.
+	enemy.position = Vector2(600, 450)
 	var normal_tick_rate := Engine.physics_ticks_per_second
 	Engine.physics_ticks_per_second = 10
 	actor.move_to(Vector2(505, 450))

@@ -21,7 +21,7 @@ func _run() -> void:
 		_fail("Clicking a soldier did not select its whole squad.")
 		return
 	battle.get_node("CanvasLayer/FormationButtons/Column").emit_signal("pressed")
-	if reserve.formation != BattleSquad.Formation.COLUMN or reserve.units[0].destination.y == reserve.units[2].destination.y:
+	if reserve.formation != BattleSquad.Formation.COLUMN or not _has_column_rows(reserve):
 		_fail("Column formation did not arrange soldiers into five rows.")
 		return
 	battle.get_node("CanvasLayer/FormationButtons/ShieldWall").emit_signal("pressed")
@@ -37,7 +37,7 @@ func _run() -> void:
 	reserve.units[0].formation_attack_multiplier = 1.0
 	var normal_damage := reserve.units[0].calculate_damage_against(enemy)
 	reserve.units[0].formation_attack_multiplier = 1.1
-	if wedge_damage <= normal_damage or reserve.units[0].destination.x <= reserve.units[9].destination.x:
+	if wedge_damage <= normal_damage or not _has_wedge_point(reserve):
 		_fail("Wedge did not apply its attack bonus and forward point.")
 		return
 	battle.get_node("CanvasLayer/FormationButtons/Line").emit_signal("pressed")
@@ -82,3 +82,21 @@ func _run() -> void:
 func _fail(message: String) -> void:
 	push_error(message)
 	quit(1)
+
+
+func _has_column_rows(squad: BattleSquad) -> bool:
+	var rows := {}
+	for unit in squad.units:
+		rows[snappedf(unit.destination.y, 0.1)] = true
+	return rows.size() == 5
+
+
+func _has_wedge_point(squad: BattleSquad) -> bool:
+	var front := -INF
+	for unit in squad.units:
+		front = maxf(front, unit.destination.x)
+	var front_count := 0
+	for unit in squad.units:
+		if is_equal_approx(unit.destination.x, front):
+			front_count += 1
+	return front_count == 1 and front > squad.ordered_center.x
