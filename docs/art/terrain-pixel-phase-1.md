@@ -44,3 +44,8 @@ Y-sort, and cleanup after restart. Camera tests use the expanded view bounds;
 unit movement tests still use the original command bounds.
 
 Rendered previews were inspected at initial, overview, and combat zooms.
+
+## Follow-up
+
+The MiniFolks unit phase was completed on 2026-10-14; see
+`docs/art/minifolks-units.md`. The terrain described above remains in use.

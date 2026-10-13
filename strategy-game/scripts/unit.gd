@@ -24,7 +24,6 @@ const FIELD_BOUNDS := FIELD.UNIT_BOUNDS
 const BODY_CONTACTS = preload("res://scripts/body_contacts.gd")
 const DEATH_EFFECT = preload("res://scripts/death_effect.gd")
 const UNIT_VISUALS = preload("res://scripts/unit_visuals.gd")
-const ATTACK_FOOT_SHIFTS := [14.0, 40.0, 20.0, 19.0, 5.0]
 
 enum State { IDLE, MOVING, CHASING, ATTACKING, HOLDING, ROUTING, DEAD }
 enum Command { HOLD, ADVANCE, CHARGE, DEFEND, FOCUS_TARGET, GUARD }
@@ -65,9 +64,7 @@ var shot_trace_timer := 0.0
 var shot_trace_end := Vector2.ZERO
 var attack_fx_timer := 0.0
 var idle_phase := 0
-var visual_clock := 0.0
-var visual_base_scale := Vector2(0.18, 0.18)
-var idle_foot_y := 0.0
+var visual_base_scale := UNIT_VISUALS.DISPLAY_SCALE
 var blocked_time := 0.0
 var arrival_wait_timer := 0.0
 var retreat_target: BattleUnit
@@ -141,15 +138,20 @@ func _ready() -> void:
 
 func _configure_visuals() -> void:
 	visual_sprite.sprite_frames = UNIT_VISUALS.frames_for(unit_type, team, is_general)
+	visual_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	visual_sprite.material = UNIT_VISUALS.material_for(team)
+	visual_sprite.scale = UNIT_VISUALS.DISPLAY_SCALE
+	visual_base_scale = visual_sprite.scale
+	visual_sprite.offset = UNIT_VISUALS.SPRITE_OFFSET
+	visual_sprite.position = UNIT_VISUALS.GROUND_POSITION
 	visual_sprite.visible = visual_sprite.sprite_frames != null
 	visual_sprite.flip_h = team == 1
 	if visual_sprite.visible:
 		visual_sprite.play(&"idle")
-		visual_sprite.stop()
 		var frame := visual_sprite.sprite_frames.get_frame_texture(&"idle", 0)
 		var used := frame.get_image().get_used_rect()
-		idle_foot_y = (used.end.y - frame.get_height() / 2.0 - 85.0) * visual_base_scale.y
-		visual_pick_rect = Rect2(Vector2(used.position) - frame.get_size() * 0.5 + Vector2(0, -85), Vector2(used.size))
+		visual_pick_rect = Rect2(Vector2(used.position) - frame.get_size() * 0.5 + visual_sprite.offset, Vector2(used.size))
+		visual_sprite.frame = idle_phase % 4
 
 
 func pick_distance(point: Vector2) -> float:
@@ -177,22 +179,16 @@ func _process(delta: float) -> void:
 		queue_redraw()
 	visual_sprite.modulate = Color.WHITE.lerp(Color(1.0, 0.65, 0.58), hit_flash_timer / 0.18)
 	_update_visual_animation()
-	visual_clock += delta
 	visual_sprite.scale = visual_base_scale
-	visual_sprite.position = Vector2.ZERO
-	if visual_sprite.animation == &"idle":
-		# The atlas idle poses move equipment and boots too far for a calm stance.
-		# Breathe from one clean pose, compensating the scale at the boot anchor.
-		var breath := sin(visual_clock * 1.8 + idle_phase * 2.4) * 0.006
-		visual_sprite.scale.y = visual_base_scale.y * (1.0 + breath)
-		visual_sprite.position.y = -idle_foot_y * breath
+	visual_sprite.position = UNIT_VISUALS.GROUND_POSITION
 
 
 func _update_visual_animation() -> void:
 	if visual_sprite.sprite_frames == null:
 		return
 	var wanted: StringName = &"idle"
-	if attack_fx_timer > 0.0:
+	var finishing_attack := visual_sprite.animation == &"attack" and visual_sprite.is_playing() and velocity.length_squared() <= 1.0 and not manual_move
+	if attack_fx_timer > 0.0 or finishing_attack:
 		wanted = &"attack"
 	elif velocity.length_squared() > 1.0:
 		wanted = &"walk"
@@ -203,16 +199,11 @@ func _update_visual_animation() -> void:
 	elif absf(velocity.x) > 1.0:
 		visual_sprite.flip_h = velocity.x < 0.0
 	visual_sprite.speed_scale = clampf(velocity.length() / move_speed, 0.45, 1.5) if wanted == &"walk" else 1.0
-	# The attack drawings sit higher on their atlas rows; keep boots anchored.
-	var role_index := 4 if is_general else clampi(unit_type, 0, 3)
-	var attack_foot_shift: float = ATTACK_FOOT_SHIFTS[role_index]
-	visual_sprite.offset = Vector2(0, -85.0 + (attack_foot_shift if wanted == &"attack" else 0.0))
-	if wanted == &"idle":
-		if visual_sprite.animation != wanted:
-			visual_sprite.play(wanted)
-		if visual_sprite.is_playing() or visual_sprite.frame != 0:
-			visual_sprite.stop()
-	elif visual_sprite.animation != wanted or (wanted == &"walk" and not visual_sprite.is_playing()):
+	if wanted == &"attack":
+		var duration := visual_sprite.sprite_frames.get_frame_count(&"attack") / 10.0
+		visual_sprite.speed_scale = maxf(1.0, duration / (attack_interval * 0.9))
+	visual_sprite.offset = UNIT_VISUALS.SPRITE_OFFSET
+	if visual_sprite.animation != wanted or (wanted != &"attack" and not visual_sprite.is_playing()):
 		visual_sprite.play(wanted)
 
 
@@ -286,10 +277,11 @@ func receive_damage(amount: float) -> void:
 		velocity = Vector2.ZERO
 		var effect := DEATH_EFFECT.new() as Node2D
 		effect.team = team
-		effect.body_texture = visual_sprite.sprite_frames.get_frame_texture(visual_sprite.animation, visual_sprite.frame)
 		effect.body_scale = visual_sprite.scale
 		effect.body_offset = visual_sprite.offset
 		effect.body_flip_h = visual_sprite.flip_h
+		effect.body_frames = visual_sprite.sprite_frames
+		effect.body_material = visual_sprite.material
 		var world: Node = get_parent().get_parent() if get_parent() is BattleSquad else get_parent()
 		var ground: Node = world.get_node_or_null("GroundEffects")
 		(ground if ground != null else world).add_child(effect)

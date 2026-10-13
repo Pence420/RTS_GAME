@@ -14,7 +14,7 @@ func _run() -> void:
 	var soldier := other.units[0]
 	var frame := soldier.visual_sprite.sprite_frames.get_frame_texture(&"idle", 0)
 	var rect := frame.get_image().get_used_rect()
-	var local_head := Vector2(rect.position) + Vector2(rect.size) * Vector2(0.5, 0.3) - frame.get_size() * 0.5 + Vector2(0, -85)
+	var local_head := Vector2(rect.position) + Vector2(rect.size) * Vector2(0.5, 0.3) - frame.get_size() * 0.5 + soldier.visual_sprite.offset
 	var head := soldier.visual_sprite.get_global_transform_with_canvas() * local_head
 	var select_click := InputEventMouseButton.new()
 	select_click.button_index = MOUSE_BUTTON_LEFT
@@ -50,7 +50,7 @@ func _run() -> void:
 	var target := enemy.units[0]
 	var enemy_frame := target.visual_sprite.sprite_frames.get_frame_texture(&"idle", 0)
 	var enemy_rect := enemy_frame.get_image().get_used_rect()
-	var enemy_head := Vector2(enemy_rect.position) + Vector2(enemy_rect.size) * Vector2(0.5, 0.3) - enemy_frame.get_size() * 0.5 + Vector2(0, -85)
+	var enemy_head := Vector2(enemy_rect.position) + Vector2(enemy_rect.size) * Vector2(0.5, 0.3) - enemy_frame.get_size() * 0.5 + target.visual_sprite.offset
 	if target.visual_sprite.flip_h:
 		enemy_head.x = -enemy_head.x
 	var attack := InputEventMouseButton.new()

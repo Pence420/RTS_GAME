@@ -12,15 +12,15 @@ func _run() -> void:
 	root.add_child(actor)
 	var sprite := actor.visual_sprite
 	var ready_pose := sprite.sprite_frames.get_frame_texture(&"idle", 0)
-	var local_boot := Vector2(0, ready_pose.get_image().get_used_rect().end.y - ready_pose.get_height() / 2.0 - 85.0)
+	var local_boot := Vector2(0, ready_pose.get_image().get_used_rect().end.y - ready_pose.get_height() / 2.0 + sprite.offset.y)
 	var boot_y := (sprite.global_transform * local_boot).y
 	for frame in range(30):
 		await physics_frame
 		if actor.global_position != Vector2(500, 450):
 			_fail("Stationary soldier drifted in world space")
 			return
-		if sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame) != ready_pose:
-			_fail("Idle soldier jumps between different leg/weapon silhouettes while standing still")
+		if sprite.animation != &"idle" or not sprite.is_playing():
+			_fail("Idle soldier does not play the authored MiniFolks idle animation")
 			return
 		if absf((sprite.global_transform * local_boot).y - boot_y) > 0.2:
 			_fail("Idle breathing lifts the soldier's boots off the ground")

@@ -5,20 +5,19 @@ const SPLASH_DURATION := 0.38
 
 var team := 0
 var remaining := DURATION
-var body_texture: Texture2D
-var body_scale := Vector2(0.18, 0.18)
-var body_offset := Vector2(0, -85)
+var body_scale := Vector2(3, 3)
+var body_offset := Vector2(0, -15)
+var body_frames: SpriteFrames
+var body_material: Material
 var body_flip_h := false
-var body: Sprite2D
+var body: AnimatedSprite2D
 var stain := PackedVector2Array()
 var droplets: Array[Vector2] = []
-var fall_direction := 1.0
 
 
 func _ready() -> void:
 	var random := RandomNumberGenerator.new()
 	random.randomize()
-	fall_direction = -1.0 if team == 1 else 1.0
 	for index in range(15):
 		var angle := TAU * index / 15.0
 		var radius := random.randf_range(7.0, 14.0)
@@ -26,14 +25,17 @@ func _ready() -> void:
 	for index in range(7):
 		var angle := random.randf_range(-PI, 0.0)
 		droplets.append(Vector2(cos(angle) * random.randf_range(16.0, 35.0), sin(angle) * random.randf_range(22.0, 38.0)))
-	if body_texture != null:
-		body = Sprite2D.new()
-		body.texture = body_texture
-		body.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	if body_frames != null:
+		body = AnimatedSprite2D.new()
+		body.sprite_frames = body_frames
+		body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		body.material = body_material
 		body.scale = body_scale
 		body.offset = body_offset
 		body.flip_h = body_flip_h
+		body.position = Vector2(0, 8)
 		add_child(body)
+		body.play(&"death")
 	queue_redraw()
 
 
@@ -44,10 +46,8 @@ func _process(delta: float) -> void:
 		return
 	var elapsed := DURATION - remaining
 	if body != null:
-		var fall := clampf(elapsed / 0.24, 0.0, 1.0)
-		body.rotation = fall_direction * fall * 1.22
-		body.position = Vector2(fall_direction * fall * 5.0, fall * 8.0)
-		body.modulate = Color(0.68, 0.65, 0.59, clampf(1.0 - maxf(0.0, elapsed - 0.25) / 0.45, 0.0, 1.0))
+		var death_duration := body_frames.get_frame_count(&"death") / body_frames.get_animation_speed(&"death")
+		body.modulate = Color(0.86, 0.82, 0.77, clampf(1.0 - maxf(0.0, elapsed - death_duration - 0.3) / 0.6, 0.0, 1.0))
 	queue_redraw()
 
 

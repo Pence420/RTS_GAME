@@ -35,8 +35,10 @@ func _ready() -> void:
 		button.custom_minimum_size = Vector2(46, 46)
 	$OrdersToggle.pressed.connect(_toggle_orders)
 	$GeneralSlot.pressed.connect(func(): general_chosen.emit())
+	$GeneralSlot.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	for letter in ["A", "B", "C", "D"]:
 		var button: Button = get_node("SquadSlots/" + letter)
+		button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		button.pressed.connect(_choose_squad.bind(letter))
 		var badge := Label.new()
 		badge.text = letter

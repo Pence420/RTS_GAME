@@ -19,6 +19,7 @@ shape = SubResource("BodyShape")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 z_index = 0
-texture_filter = 2
-offset = Vector2(0, -85)
-scale = Vector2(0.18, 0.18)
+texture_filter = 1
+position = Vector2(0, 8)
+offset = Vector2(0, -15)
+scale = Vector2(3, 3)

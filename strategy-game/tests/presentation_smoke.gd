@@ -20,7 +20,7 @@ func _run() -> void:
 			var frames: SpriteFrames = actor.UNIT_VISUALS.frames_for(role, team, false)
 			for frame_index in range(frames.get_frame_count(&"idle")):
 				var image: Image = frames.get_frame_texture(&"idle", frame_index).get_image()
-				image.resize(roundi(image.get_width() * scale.x), roundi(image.get_height() * scale.y), Image.INTERPOLATE_LANCZOS)
+				image.resize(roundi(image.get_width() * scale.x), roundi(image.get_height() * scale.y), Image.INTERPOLATE_NEAREST)
 				var opaque := 0
 				var intersections := [0, 0]
 				for y in range(image.get_height()):
@@ -84,7 +84,7 @@ func _run() -> void:
 		return
 	battle.call("_on_menu_unit_type_changed", 2, BattleUnit.UnitType.ARCHER)
 	var portrait := hud.get_node("SquadSlots/C").icon as AtlasTexture
-	if not portrait.atlas.resource_path.ends_with("archer_blue.png") or not hud.get_node("Status").text.contains("Archer"):
+	if not portrait.atlas.resource_path.ends_with("MiniArcherMan.png") or not hud.get_node("Status").text.contains("Archer"):
 		_fail("Deployment composition change left a stale portrait or selection summary")
 		return
 	var survivor: BattleSquad = battle.player_squads[2]

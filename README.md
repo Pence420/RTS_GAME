@@ -18,3 +18,5 @@ The map is 2400×1400. Before battle, the blue outline marks your deployment are
 Terrain uses legacy CC0 Tiny Swords sprites: grass, earth lanes, rocky coastal cliffs, animated shoreline foam, and trees with authored wind frames. Zoom out to see the coastline. See `docs/art/terrain-pixel-phase-1.md` for scope and asset provenance.
 
 Without an explicit order, player soldiers guard their position and fight nearby threats. See `docs/gameplay/direct-orders-and-stances.md` for details.
+
+Units use original MiniFolks Humans sprites by LYASeeK, with authored idle/walk/attack/death animations and blue/red cloth palettes. Axeman uses the pack’s halberd character. See `docs/art/minifolks-units.md` for role mappings and license terms.
