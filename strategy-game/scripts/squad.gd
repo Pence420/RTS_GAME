@@ -50,6 +50,8 @@ func _ready() -> void:
 		unit.escaped.connect(_on_soldier_escaped)
 		unit.health_changed.connect(_on_health_changed)
 		units.append(unit)
+		unit.squad_attached = true
+		unit.squad_center = global_position
 		slots[unit] = slot
 		slot_indices[unit] = index
 
@@ -60,6 +62,9 @@ func _process(delta: float) -> void:
 	aura_check_timer -= delta
 	if aura_check_timer <= 0.0:
 		_refresh_general_aura()
+		var center := get_center()
+		for unit in units:
+			unit.squad_center = center
 		aura_check_timer = 0.25
 
 

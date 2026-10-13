@@ -150,7 +150,7 @@ offset_right = -262.0
 offset_bottom = 47.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.68, 0.82, 0.89, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 15
 text = "BLUE  40"
 
 [node name="RedCount" type="Label" parent="CanvasLayer"]
@@ -162,7 +162,7 @@ offset_right = 364.0
 offset_bottom = 47.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.9, 0.66, 0.56, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 15
 text = "RED  40"
 horizontal_alignment = 1
 
@@ -368,7 +368,7 @@ offset_right = 260.0
 offset_bottom = -23.0
 mouse_filter = 1
 theme_override_colors/font_color = Color(0.9, 0.88, 0.77, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = ""
 horizontal_alignment = 1
 
@@ -723,6 +723,7 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="ResultTitle" type="Label" parent="CanvasLayer/ResultOverlay/Center/Content"]
+theme_type_variation = &"Heading"
 layout_mode = 2
 theme_override_font_sizes/font_size = 54
 theme_override_colors/font_color = Color(0.92, 0.75, 0.45, 1)

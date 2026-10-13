@@ -44,7 +44,7 @@ func _input(event: InputEvent) -> void:
 
 
 func show_menu(squads: Array[BattleSquad], battle_started: bool) -> void:
-	phase_note.text = "SQUAD TYPES LOCKED · battle in progress" if battle_started else "CHOOSE YOUR FOUR SQUADS · before battle"
+	phase_note.text = "Squad types locked · battle in progress" if battle_started else "Choose your four squads · before battle"
 	for index in range(4):
 		var row := rows.get_child(index)
 		var present := index < squads.size()

@@ -48,13 +48,14 @@ layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
 [node name="Title" type="Label" parent="Center/Card"]
+theme_type_variation = &"Heading"
 offset_left = 28.0
 offset_top = 20.0
 offset_right = 700.0
 offset_bottom = 56.0
 theme_override_colors/font_color = Color(0.95, 0.91, 0.83, 1)
 theme_override_font_sizes/font_size = 29
-text = "BATTLEFIELD  /  COMMAND"
+text = "Battle orders"
 
 [node name="PhaseNote" type="Label" parent="Center/Card"]
 offset_left = 30.0
@@ -72,7 +73,7 @@ offset_right = 180.0
 offset_bottom = 143.0
 theme_override_font_sizes/font_size = 17
 toggle_mode = true
-text = "ARMY"
+text = "Army"
 
 [node name="GuideTab" type="Button" parent="Center/Card"]
 offset_left = 190.0
@@ -81,7 +82,7 @@ offset_right = 340.0
 offset_bottom = 143.0
 theme_override_font_sizes/font_size = 17
 toggle_mode = true
-text = "FIELD GUIDE"
+text = "Field guide"
 
 [node name="ArmyPage" type="Control" parent="Center/Card"]
 offset_left = 30.0
@@ -90,6 +91,7 @@ offset_right = 910.0
 offset_bottom = 462.0
 
 [node name="ArmyHeader" type="Label" parent="Center/Card/ArmyPage"]
+theme_type_variation = &"Heading"
 offset_right = 860.0
 offset_bottom = 26.0
 theme_override_colors/font_color = Color(0.65, 0.74, 0.75, 1)
@@ -131,7 +133,7 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "SELECT"
+text = "Select"
 
 [node name="Row1" type="HBoxContainer" parent="Center/Card/ArmyPage/Rows"]
 custom_minimum_size = Vector2(860, 54)
@@ -162,7 +164,7 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "SELECT"
+text = "Select"
 
 [node name="Row2" type="HBoxContainer" parent="Center/Card/ArmyPage/Rows"]
 custom_minimum_size = Vector2(860, 54)
@@ -193,7 +195,7 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "SELECT"
+text = "Select"
 
 [node name="Row3" type="HBoxContainer" parent="Center/Card/ArmyPage/Rows"]
 custom_minimum_size = Vector2(860, 54)
@@ -224,7 +226,7 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "SELECT"
+text = "Select"
 
 [node name="GuidePage" type="Control" parent="Center/Card"]
 visible = false
@@ -246,7 +248,7 @@ offset_top = 477.0
 offset_right = 910.0
 offset_bottom = 520.0
 theme_override_font_sizes/font_size = 18
-text = "CONTINUE"
+text = "Continue"
 
 [node name="RestartButton" type="Button" parent="Center/Card"]
 offset_left = 30.0
@@ -254,7 +256,7 @@ offset_top = 477.0
 offset_right = 230.0
 offset_bottom = 520.0
 theme_override_font_sizes/font_size = 16
-text = "RESTART BATTLE"
+text = "Restart battle"
 
 [node name="MainMenuButton" type="Button" parent="Center/Card"]
 offset_left = 245.0
@@ -262,4 +264,4 @@ offset_top = 477.0
 offset_right = 445.0
 offset_bottom = 520.0
 theme_override_font_sizes/font_size = 16
-text = "MAIN MENU"
+text = "Main menu"

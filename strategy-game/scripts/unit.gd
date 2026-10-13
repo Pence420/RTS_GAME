@@ -14,7 +14,10 @@ const DETECTION_RANGE := 230.0
 const ATTACK_RANGE := 27.0
 const ATTACK_INTERVAL := 0.8
 const GENERAL_RADIUS := 270.0
-const ARCHER_RETREAT_RANGE := 75.0
+const ARCHER_RETREAT_RANGE := 90.0
+const ARCHER_SAFE_RANGE := 120.0
+const TARGET_SWITCH_MARGIN := 40.0
+const COHESION_LIMIT := 155.0
 const FIELD_BOUNDS := Rect2(20.0, 20.0, 1560.0, 860.0)
 const BODY_CONTACTS = preload("res://scripts/body_contacts.gd")
 const DEATH_EFFECT = preload("res://scripts/death_effect.gd")
@@ -65,6 +68,12 @@ var visual_base_scale := Vector2(0.18, 0.18)
 var idle_foot_y := 0.0
 var blocked_time := 0.0
 var arrival_wait_timer := 0.0
+var retreat_target: BattleUnit
+var squad_center := Vector2.ZERO
+var squad_attached := false
+var autonomous_order := false
+var regrouping := false
+var guarded_allies: Array[BattleUnit] = []
 
 @onready var visual_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -202,6 +211,9 @@ func set_command(value: int) -> void:
 	if routing:
 		return
 	command_mode = value
+	autonomous_order = false
+	regrouping = false
+	retreat_target = null
 	current_target = null
 	target_scan_timer = 0.0
 	focus_targets = []
@@ -321,14 +333,21 @@ func _physics_process(delta: float) -> void:
 		return
 	target_scan_timer -= delta
 	if target_scan_timer <= 0.0 or (current_target != null and not _target_is_valid()):
+		var candidate := _find_nearest_enemy()
 		if not _can_keep_target():
-			current_target = _find_nearest_enemy()
-		target_scan_timer = 0.25
+			current_target = candidate
+		elif candidate != null and candidate != current_target and global_position.distance_to(current_target.global_position) > get_contact_reach():
+			# Reconsider a chase only for a substantial improvement. Preserve an
+			# active fight and avoid jitter between nearly equivalent opponents.
+			if _target_score(candidate, {}) + TARGET_SWITCH_MARGIN < _target_score(current_target, {}):
+				current_target = candidate
+		target_scan_timer = 0.4
 
 	var threat := _nearby_melee_threat() if unit_type == UnitType.ARCHER and not manual_move and command_mode != Command.HOLD and command_mode != Command.DEFEND else null
 	if _target_is_valid() and global_position.distance_to(current_target.global_position) <= get_contact_reach():
 		state = State.ATTACKING
-		velocity = Vector2.ZERO
+		if threat == null:
+			velocity = Vector2.ZERO
 		if charge_bonus_ready:
 			charge_bonus_timer = 2.0
 			charge_bonus_ready = false
@@ -348,7 +367,12 @@ func _physics_process(delta: float) -> void:
 		_retreat_from(threat, delta)
 	elif _target_is_valid() and command_mode != Command.HOLD and command_mode != Command.DEFEND:
 		state = State.CHASING
-		_move_toward(current_target.global_position, delta)
+		var may_regroup := squad_attached and (command_mode == Command.ADVANCE or autonomous_order)
+		if may_regroup and global_position.distance_to(squad_center) > COHESION_LIMIT:
+			regrouping = true
+		if not may_regroup or global_position.distance_to(squad_center) < 110.0:
+			regrouping = false
+		_move_toward(squad_center if regrouping else current_target.global_position, delta)
 	else:
 		state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
 		velocity = Vector2.ZERO
@@ -423,21 +447,36 @@ func _destination_occupied() -> bool:
 
 
 func _nearby_melee_threat() -> BattleUnit:
+	# Keep retreating to a safe firing distance instead of alternating walk
+	# and attack on every crossing of the original panic threshold.
+	if is_instance_valid(retreat_target) and retreat_target.is_alive() and not retreat_target.routing and global_position.distance_to(retreat_target.global_position) < ARCHER_SAFE_RANGE:
+		return retreat_target
+	retreat_target = null
 	var closest: BattleUnit
 	var nearest := ARCHER_RETREAT_RANGE
 	for node in get_tree().get_nodes_in_group("team_%d" % (1 - team)):
 		var enemy := node as BattleUnit
-		if enemy == null or not enemy.is_alive() or enemy.routing:
+		if enemy == null or not enemy.is_alive() or enemy.routing or (enemy.unit_type == UnitType.ARCHER and not enemy.is_general):
 			continue
 		var distance := global_position.distance_to(enemy.global_position)
 		if distance < nearest:
 			nearest = distance
 			closest = enemy
+	retreat_target = closest
 	return closest
 
 
 func _retreat_from(enemy: BattleUnit, delta: float) -> void:
+	state = State.CHASING
 	var direction := (global_position - enemy.global_position).normalized()
+	for node in get_tree().get_nodes_in_group("team_%d" % (1 - team)):
+		var threat := node as BattleUnit
+		if threat == enemy or not threat.is_alive() or threat.routing or threat.unit_type == UnitType.ARCHER:
+			continue
+		var offset := global_position - threat.global_position
+		if offset.length() < ARCHER_SAFE_RANGE and offset.length() > 0.01:
+			direction += offset.normalized() * (1.0 - offset.length() / ARCHER_SAFE_RANGE)
+	direction = direction.normalized()
 	if direction == Vector2.ZERO:
 		direction = Vector2.LEFT if team == 0 else Vector2.RIGHT
 	var retreat_point := global_position + direction * 100.0
@@ -479,8 +518,11 @@ func _find_nearest_enemy() -> BattleUnit:
 	var range_limit := nearest_distance
 	nearest_distance = INF
 	var claims := {}
+	guarded_allies.clear()
 	for ally_node in get_tree().get_nodes_in_group("team_%d" % team):
 		var ally := ally_node as BattleUnit
+		if ally.is_alive() and not ally.routing and (ally.unit_type == UnitType.ARCHER or ally.is_general):
+			guarded_allies.append(ally)
 		if ally != self and ally._target_is_valid():
 			claims[ally.current_target] = claims.get(ally.current_target, 0) + 1
 	for node in candidates:
@@ -488,11 +530,35 @@ func _find_nearest_enemy() -> BattleUnit:
 		if enemy == null or not enemy.is_alive() or enemy.routing:
 			continue
 		var distance := global_position.distance_to(enemy.global_position)
-		var score := distance + float(claims.get(enemy, 0)) * 18.0
+		var score := _target_score(enemy, claims)
 		if distance <= range_limit and score < nearest_distance:
 			nearest_distance = score
 			closest = enemy
 	return closest
+
+
+func _target_score(enemy: BattleUnit, claims: Dictionary) -> float:
+	var distance := global_position.distance_to(enemy.global_position)
+	var score := distance + float(claims.get(enemy, 0)) * 18.0
+	# Match existing damage counters. Distance still dominates a distant
+	# opportunity, and explicit focus restricts the candidate list first.
+	if unit_type == UnitType.SWORDSMAN and enemy.unit_type == UnitType.SPEARMAN:
+		score -= 36.0
+	elif unit_type == UnitType.AXEMAN and enemy.unit_type == UnitType.SWORDSMAN:
+		score -= 36.0
+	elif unit_type == UnitType.ARCHER and enemy.unit_type == UnitType.AXEMAN:
+		score -= 36.0
+	elif unit_type == UnitType.SPEARMAN and enemy.command_mode == Command.CHARGE:
+		score -= 40.0
+	if unit_type != UnitType.ARCHER and distance <= get_contact_reach() + 4.0:
+		score -= 90.0 # Deal with someone at the shield before a distant matchup.
+	if unit_type != UnitType.ARCHER and enemy.unit_type != UnitType.ARCHER:
+		for ally in guarded_allies:
+			if is_instance_valid(ally) and ally.is_alive() and not ally.routing and ally.global_position.distance_to(enemy.global_position) < 100.0:
+				score -= 40.0
+				break
+	score -= (1.0 - enemy.current_hp / enemy.max_hp) * 12.0
+	return score
 
 
 func _draw() -> void:
