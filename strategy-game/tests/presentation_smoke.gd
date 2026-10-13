@@ -70,7 +70,7 @@ func _run() -> void:
 	battle._input(press)
 	press.button_index = MOUSE_BUTTON_RIGHT
 	press.pressed = true
-	battle._unhandled_input(press)
+	root.push_input(press, true)
 	if battle.get_node("Camera2D").position != camera_before or squad.ordered_center != order_before:
 		_fail("Dragging or right-clicking the Orders tray issued a world action")
 		return

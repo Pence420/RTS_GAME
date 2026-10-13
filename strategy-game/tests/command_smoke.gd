@@ -22,7 +22,7 @@ func _run() -> void:
 	run_click.pressed = true
 	run_click.double_click = true
 	run_click.position = battle.get_global_transform_with_canvas() * Vector2(550, 500)
-	battle._unhandled_input(run_click)
+	root.push_input(run_click, true)
 	if squad.units[0].travel_speed_multiplier <= 1.0 or squad.ordered_center.distance_to(Vector2(550, 500)) > 1.0:
 		_fail("Double right-click did not issue a run")
 		return

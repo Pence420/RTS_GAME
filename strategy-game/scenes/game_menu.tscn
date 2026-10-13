@@ -240,7 +240,7 @@ offset_right = 850.0
 offset_bottom = 300.0
 theme_override_colors/font_color = Color(0.87, 0.9, 0.86, 1)
 theme_override_font_sizes/font_size = 18
-text = "SWORDSMAN   Balanced front line. Reliable in melee.\nSPEARMAN     Long reach. Brace to resist a charge.\nAXEMAN         Heavy damage. Breaks tough enemies.\nARCHER           Ranged support. Pressures slow axemen.\n\nClick a blue squad, then hold and drag it to move.\nDrag empty ground to pan. Scroll or use + / − to zoom.\nRight-click ground to move; double right-click to run.\nRight-click an enemy to attack. Defend guards; Full Attack charges.\nWithout an order, soldiers counter nearby enemies and guard their position."
+text = "SWORDSMAN   Balanced front line. Reliable in melee.\nSPEARMAN     Long reach. Brace to resist a charge.\nAXEMAN         Heavy damage. Breaks tough enemies.\nARCHER           Ranged support. Pressures slow axemen.\n\nClick a blue squad, then hold and drag it to move.\nDrag empty ground to pan. Scroll or use + / − to zoom.\nRight-click or Control-click ground to move; double-click to run.\nRight-click an enemy to attack. Defend guards; Full Attack charges.\nWithout an order, soldiers counter nearby enemies and guard their position.\nBefore battle, the blue outline marks your deployment area."
 
 [node name="ContinueButton" type="Button" parent="Center/Card"]
 offset_left = 640.0

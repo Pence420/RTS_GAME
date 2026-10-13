@@ -89,7 +89,7 @@ func _run() -> void:
 	move_press.pressed = false
 	move_press.position = move_screen
 	battle._input(move_press)
-	var expected_move: Vector2 = battle.call("_screen_to_world", move_screen)
+	var expected_move: Vector2 = blue.clamp_destination(battle.call("_screen_to_world", move_screen))
 	if camera.position != camera_before_move or blue.ordered_center.distance_to(expected_move) > 2.0 or blue.target_squad != null or blue.command != BattleSquad.Command.GUARD:
 		_fail("Selected-squad drag panned the camera or failed to issue Move.")
 		return
@@ -132,7 +132,7 @@ func _run() -> void:
 		_fail("Camera pan exposed the empty area left of the battlefield.")
 		return
 	camera.pan_by_screen_delta(Vector2(-10000, 0))
-	if camera.position.x > 1600.0 - half_view + 1.0:
+	if camera.position.x > battle.FIELD_SIZE.x - half_view + 1.0:
 		_fail("Camera pan exposed the empty area right of the battlefield.")
 		return
 	print("Touchpad controls smoke passed: click actions, selected-squad drag move, empty-ground pan, and zoom.")

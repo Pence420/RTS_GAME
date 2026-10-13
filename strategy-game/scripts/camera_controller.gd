@@ -1,14 +1,20 @@
 extends Camera2D
 
+const FIELD = preload("res://scripts/battle_field.gd")
+
 const PAN_SPEED := 550.0
-const MIN_ZOOM := 0.6
+const MIN_ZOOM := 0.45
 const MAX_ZOOM := 2.0
-const FIELD_SIZE := Vector2(1600, 900)
+const FIELD_SIZE := FIELD.SIZE
 const HUD_TOP := 60.0
 const HUD_BOTTOM := 94.0
 
 var dragging := false
 
+
+func _ready() -> void:
+	position = FIELD_SIZE / 2.0
+	_clamp_position()
 
 func _process(delta: float) -> void:
 	var direction := Vector2(

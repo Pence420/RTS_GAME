@@ -1,8 +1,10 @@
 extends Node2D
 
+const FIELD = preload("res://scripts/battle_field.gd")
+
 const SQUAD_SCENE: PackedScene = preload("res://scenes/squad.tscn")
 const UNIT_SCENE: PackedScene = preload("res://scenes/unit.tscn")
-const FIELD_SIZE := Vector2(1600, 900)
+const FIELD_SIZE := FIELD.SIZE
 enum PointerMode { SELECT, MOVE, TARGET }
 enum DragAction { PAN, MOVE }
 const DRAG_THRESHOLD := 8.0
@@ -16,6 +18,7 @@ var enemy_squads: Array[BattleSquad] = []
 var pending_focus_target := false
 var pointer_mode := PointerMode.SELECT
 var drag_active := false
+var context_button := 0
 var drag_moved := false
 var drag_start := Vector2.ZERO
 var drag_action := DragAction.PAN
@@ -155,14 +158,17 @@ func _start_battle() -> void:
 		return
 	battle_started = true
 	for squad in player_squads:
+		squad.placement_bounds = FIELD.UNIT_BOUNDS
 		squad.begin_battle()
 	for squad in enemy_squads:
+		squad.placement_bounds = FIELD.UNIT_BOUNDS
 		squad.begin_battle()
 	if is_instance_valid(player_general):
 		player_general.combat_enabled = true
 	if is_instance_valid(enemy_general):
 		enemy_general.combat_enabled = true
 	enemy_ai.begin_battle(player_squads, enemy_squads, enemy_general)
+	queue_redraw()
 	start_button.hide()
 	$CanvasLayer/BattleEmblem.show()
 	_update_status()
@@ -233,7 +239,8 @@ func _spawn_squad(team: int, squad_id: String, unit_type: int, start_position: V
 	squad.team = team
 	squad.squad_id = squad_id
 	squad.unit_type = unit_type
-	squad.position = start_position
+	squad.position = start_position + FIELD.START_OFFSET
+	squad.placement_bounds = FIELD.BLUE_DEPLOYMENT if team == 0 else FIELD.RED_DEPLOYMENT
 	squad.z_index = 1
 	add_child(squad)
 	squad.roster_changed.connect(_on_soldier_removed)
@@ -255,7 +262,7 @@ func _spawn_general(team: int, start_position: Vector2) -> BattleUnit:
 	general.current_hp = 70.0
 	general.damage = 10.0
 	general.armor = 3.0
-	general.position = start_position
+	general.position = start_position + FIELD.START_OFFSET
 	general.z_index = 1
 	add_child(general)
 	general.set_command(BattleUnit.Command.HOLD)
@@ -383,6 +390,21 @@ func _input(event: InputEvent) -> void:
 		return
 	if game_menu.visible:
 		return
+	if event is InputEventMouseButton:
+		var context_click: bool = event.button_index == MOUSE_BUTTON_RIGHT or (event.button_index == MOUSE_BUTTON_LEFT and event.ctrl_pressed) or (not event.pressed and context_button != 0 and event.button_index == context_button)
+		if context_click:
+			drag_active = false
+			drag_moved = false
+			queue_redraw()
+			if event.pressed:
+				context_button = event.button_index
+				if _is_gameplay_point(event.position):
+					_issue_right_click(_screen_to_world(event.position), event.double_click)
+			elif event.button_index == context_button:
+				context_button = 0
+			if _is_gameplay_point(event.position):
+				get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			drag_active = _is_gameplay_point(event.position)
@@ -421,17 +443,12 @@ func _screen_to_world(point: Vector2) -> Vector2:
 
 func _is_selected_at(point: Vector2) -> bool:
 	if selected_general != null and selected_general.is_alive():
-		return selected_general.global_position.distance_to(point) <= BattleSquad.PICK_RADIUS + 8.0
+		return selected_general.pick_distance(point) <= BattleSquad.PICK_RADIUS + 8.0
 	return selected_squad != null and not selected_squad.routing and selected_squad.distance_to_point(point) <= BattleSquad.PICK_RADIUS + 12.0
 
 
 func _is_gameplay_point(point: Vector2) -> bool:
 	return Rect2(Vector2.ZERO, get_viewport_rect().size).has_point(point) and not hud.blocks_point(point) and not result_overlay.visible and not game_menu.visible
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and _is_gameplay_point(event.position) and (selected_squad != null or selected_general != null):
-		_issue_right_click(_screen_to_world(event.position), event.double_click)
 
 
 func _handle_primary_click(point: Vector2) -> void:
@@ -460,20 +477,15 @@ func _issue_right_click(point: Vector2, running: bool = false) -> void:
 
 
 func _issue_move(point: Vector2, running: bool = false) -> bool:
+	var bounds := FIELD.UNIT_BOUNDS if battle_started else FIELD.BLUE_DEPLOYMENT
 	if selected_general != null:
 		selected_general.set_command(BattleUnit.Command.HOLD)
-		selected_general.move_to(Vector2(
-			clampf(point.x, 20.0, FIELD_SIZE.x - 20.0),
-			clampf(point.y, 20.0, FIELD_SIZE.y - 20.0)
-		), running)
+		selected_general.move_to(point.clamp(bounds.position, bounds.end - Vector2.ONE), running)
 		return true
 	if selected_squad == null or selected_squad.routing:
 		return false
 	selected_squad.resume_stance()
-	selected_squad.move_to(Vector2(
-		clampf(point.x, 160.0, FIELD_SIZE.x - 160.0),
-		clampf(point.y, 170.0, FIELD_SIZE.y - 170.0)
-	), running)
+	selected_squad.move_to(point, running)
 	_update_status()
 	_update_command_buttons()
 	return true
@@ -508,7 +520,7 @@ func _issue_target(point: Vector2, command: int) -> bool:
 
 
 func _enemy_general_at(point: Vector2) -> BattleUnit:
-	if is_instance_valid(enemy_general) and enemy_general.is_alive() and enemy_general.global_position.distance_to(point) < BattleSquad.PICK_RADIUS:
+	if is_instance_valid(enemy_general) and enemy_general.is_alive() and enemy_general.pick_distance(point) < BattleSquad.PICK_RADIUS:
 		return enemy_general
 	return null
 
@@ -584,7 +596,7 @@ func _select_at(point: Vector2) -> void:
 	if selected_general != null:
 		selected_general.set_selected(false)
 	selected_general = null
-	if is_instance_valid(player_general) and player_general.is_alive() and player_general.global_position.distance_to(point) < BattleSquad.PICK_RADIUS:
+	if is_instance_valid(player_general) and player_general.is_alive() and player_general.pick_distance(point) < BattleSquad.PICK_RADIUS:
 		selected_general = player_general
 		selected_general.set_selected(true)
 		_update_status()
@@ -607,9 +619,17 @@ func _select_at(point: Vector2) -> void:
 
 
 func _draw() -> void:
+	draw_rect(FIELD.UNIT_BOUNDS, Color("d0c89e", 0.25), false, 1.5)
+	if not battle_started:
+		draw_rect(FIELD.BLUE_DEPLOYMENT, Color("85bbc6", 0.035))
+		draw_rect(FIELD.BLUE_DEPLOYMENT, Color("85bbc6", 0.65), false, 2.0)
+		draw_rect(FIELD.RED_DEPLOYMENT, Color("c58b77", 0.38), false, 1.5)
 	if drag_active and drag_moved and drag_action == DragAction.MOVE and (is_instance_valid(selected_general) or is_instance_valid(selected_squad)):
 		var origin := selected_general.global_position if selected_general != null else selected_squad.get_center()
-		var destination := drag_destination.clamp(Vector2(20, 20), FIELD_SIZE - Vector2(20, 20))
+		var bounds := FIELD.UNIT_BOUNDS if battle_started else FIELD.BLUE_DEPLOYMENT
+		var destination := drag_destination.clamp(bounds.position, bounds.end - Vector2.ONE)
+		if selected_squad != null:
+			destination = selected_squad.clamp_destination(drag_destination)
 		draw_line(origin, destination, Color("f4dc93", 0.85), 3.0)
 		draw_arc(destination, 16.0, 0.0, TAU, 24, Color("f4dc93"), 2.0)
 		draw_circle(destination, 4.0, Color("f4dc93"))

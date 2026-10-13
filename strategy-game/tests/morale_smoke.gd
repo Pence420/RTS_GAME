@@ -58,7 +58,13 @@ func _run() -> void:
 	if enemy_ai._nearest_player_squad(red.get_center()) == reserve:
 		_fail("Enemy AI must ignore routing squads.")
 		return
-	for frame in range(180):
+	var escape_seconds := 0.0
+	for soldier in reserve.units:
+		escape_seconds = maxf(escape_seconds, soldier.global_position.distance_to(soldier.destination) / (soldier.move_speed * 1.4))
+	# Escape travel time grows with map size; retain two seconds of contact slack.
+	for frame in range(ceili((escape_seconds + 2.0) * Engine.physics_ticks_per_second)):
+		if not is_instance_valid(reserve) or not player_squads.has(reserve):
+			break
 		await physics_frame
 	for squad in player_squads:
 		if squad.squad_id == "Blue B":

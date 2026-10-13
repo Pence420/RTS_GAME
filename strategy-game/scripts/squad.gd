@@ -6,6 +6,7 @@ signal health_changed(squad: BattleSquad)
 signal morale_changed(squad: BattleSquad)
 signal routed(squad: BattleSquad)
 
+const FIELD = preload("res://scripts/battle_field.gd")
 const UNIT_SCENE: PackedScene = preload("res://scenes/unit.tscn")
 const SOLDIERS_PER_SQUAD := 10
 const PICK_RADIUS := 22.0
@@ -34,6 +35,7 @@ var routing := false
 var general_in_range := false
 var aura_check_timer := 0.0
 var ordered_center := Vector2.ZERO
+var placement_bounds := BattleUnit.FIELD_BOUNDS
 var units: Array[BattleUnit] = []
 var slots: Dictionary[BattleUnit, Vector2] = {}
 var slot_indices: Dictionary[BattleUnit, int] = {}
@@ -75,15 +77,19 @@ func move_to(center: Vector2, running: bool = false) -> void:
 	if routing:
 		return
 	_assign_formation_slots(center)
+	center = clamp_destination(center)
+	ordered_center = center
+	for unit in units:
+		unit.move_to(center + slots[unit], running)
+
+
+func clamp_destination(center: Vector2) -> Vector2:
 	var minimum := Vector2.ZERO
 	var maximum := Vector2.ZERO
 	for unit in units:
 		minimum = minimum.min(slots[unit])
 		maximum = maximum.max(slots[unit])
-	center = center.clamp(BattleUnit.FIELD_BOUNDS.position - minimum, BattleUnit.FIELD_BOUNDS.end - Vector2.ONE - maximum)
-	ordered_center = center
-	for unit in units:
-		unit.move_to(center + slots[unit], running)
+	return center.clamp(placement_bounds.position - minimum, placement_bounds.end - Vector2.ONE - maximum)
 
 
 func _assign_formation_slots(center: Vector2) -> void:
@@ -192,8 +198,8 @@ func _check_routing() -> void:
 	target_squad = null
 	target_general = null
 	for unit in units:
-		var exit_x := 16.0 if team == 0 else 1584.0
-		unit.start_routing(Vector2(exit_x, clampf(unit.global_position.y, 16.0, 884.0)))
+		var exit_x := 16.0 if team == 0 else FIELD.SIZE.x - 16.0
+		unit.start_routing(Vector2(exit_x, clampf(unit.global_position.y, 16.0, FIELD.SIZE.y - 16.0)))
 	routed.emit(self)
 
 
@@ -346,7 +352,7 @@ func _draw() -> void:
 func distance_to_point(point: Vector2) -> float:
 	var nearest := INF
 	for unit in units:
-		nearest = minf(nearest, unit.global_position.distance_to(point))
+		nearest = minf(nearest, unit.pick_distance(point))
 	return nearest
 
 

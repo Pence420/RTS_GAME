@@ -1,6 +1,8 @@
 class_name BattleUnit
 extends CharacterBody2D
 
+const FIELD = preload("res://scripts/battle_field.gd")
+
 signal died(unit: BattleUnit)
 signal health_changed(unit: BattleUnit)
 signal escaped(unit: BattleUnit)
@@ -18,7 +20,7 @@ const ARCHER_RETREAT_RANGE := 90.0
 const ARCHER_SAFE_RANGE := 120.0
 const TARGET_SWITCH_MARGIN := 40.0
 const COHESION_LIMIT := 155.0
-const FIELD_BOUNDS := Rect2(20.0, 20.0, 1560.0, 860.0)
+const FIELD_BOUNDS := FIELD.UNIT_BOUNDS
 const BODY_CONTACTS = preload("res://scripts/body_contacts.gd")
 const DEATH_EFFECT = preload("res://scripts/death_effect.gd")
 const UNIT_VISUALS = preload("res://scripts/unit_visuals.gd")
@@ -77,6 +79,7 @@ var guarded_allies: Array[BattleUnit] = []
 var guard_anchor := Vector2.ZERO
 var stance_defending := false
 var travel_speed_multiplier := 1.0
+var visual_pick_rect := Rect2()
 
 @onready var visual_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -144,7 +147,19 @@ func _configure_visuals() -> void:
 		visual_sprite.play(&"idle")
 		visual_sprite.stop()
 		var frame := visual_sprite.sprite_frames.get_frame_texture(&"idle", 0)
-		idle_foot_y = (frame.get_image().get_used_rect().end.y - frame.get_height() / 2.0 - 85.0) * visual_base_scale.y
+		var used := frame.get_image().get_used_rect()
+		idle_foot_y = (used.end.y - frame.get_height() / 2.0 - 85.0) * visual_base_scale.y
+		visual_pick_rect = Rect2(Vector2(used.position) - frame.get_size() * 0.5 + Vector2(0, -85), Vector2(used.size))
+
+
+func pick_distance(point: Vector2) -> float:
+	var local_point := visual_sprite.to_local(point)
+	if visual_sprite.flip_h:
+		local_point.x = -local_point.x
+	var distance := global_position.distance_to(point)
+	# Pick the visible character rather than only its ground/physics anchor.
+	# A distance tie-break prefers the nearer body where silhouettes overlap.
+	return distance * 0.1 if visual_pick_rect.has_point(local_point) else distance
 
 
 func _process(delta: float) -> void:

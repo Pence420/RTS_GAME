@@ -7,7 +7,7 @@ Use direct battlefield controls inspired by Total War. Keep Defend and Full Atta
 ## Controls
 
 - Left-click: select a squad or general.
-- Right-click ground: walk to the destination and cancel an earlier explicit attack.
+- Right-click ground (Control + click also works on Mac): walk to the destination and cancel an earlier explicit attack.
 - Double right-click ground: run, at 1.35 times the normal movement speed before formation/defence modifiers.
 - Right-click an enemy squad or general: attack that target.
 - Double right-click an enemy: charge it.
@@ -15,6 +15,8 @@ Use direct battlefield controls inspired by Total War. Keep Defend and Full Atta
 - Touchpad Move/Target alternatives and zoom buttons remain available.
 
 The old Hold, Advance, and Focus Target buttons and their panel handlers were removed. The tray now exposes four formation icons, two stance icons, and three touchpad alternatives. Icon tooltips and the field guide describe the new controls.
+
+The later expanded-field pass adds visible blue deployment limits and a 2400×1400 map. See touchpad-and-battlefield.md for input diagnosis and current bounds.
 
 ## Stances
 
