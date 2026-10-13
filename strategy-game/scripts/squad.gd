@@ -42,7 +42,7 @@ func _ready() -> void:
 		var unit := UNIT_SCENE.instantiate() as BattleUnit
 		var slot := _slot_for(index)
 		unit.team = team
-		unit.idle_phase = index % 3
+		unit.idle_phase = index
 		unit.configure_type(unit_type)
 		unit.position = slot
 		add_child(unit)

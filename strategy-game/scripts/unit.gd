@@ -6,7 +6,7 @@ signal health_changed(unit: BattleUnit)
 signal escaped(unit: BattleUnit)
 
 const MOVE_SPEED := 145.0
-const ARRIVAL_DISTANCE := 3.0
+const ARRIVAL_DISTANCE := 0.15
 const DETECTION_RANGE := 230.0
 const ATTACK_RANGE := 27.0
 const ATTACK_INTERVAL := 0.8
@@ -56,6 +56,9 @@ var shot_trace_timer := 0.0
 var shot_trace_end := Vector2.ZERO
 var attack_fx_timer := 0.0
 var idle_phase := 0
+var visual_clock := 0.0
+var visual_base_scale := Vector2(0.18, 0.18)
+var idle_foot_y := 0.0
 
 @onready var visual_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -103,6 +106,7 @@ func get_type_name() -> String:
 
 func _ready() -> void:
 	destination = global_position
+	visual_base_scale = visual_sprite.scale
 	add_to_group("team_%d" % team)
 	_configure_visuals()
 	queue_redraw()
@@ -114,7 +118,9 @@ func _configure_visuals() -> void:
 	visual_sprite.flip_h = team == 1
 	if visual_sprite.visible:
 		visual_sprite.play(&"idle")
-		visual_sprite.set_frame_and_progress(idle_phase, float(idle_phase) / 3.0)
+		visual_sprite.stop()
+		var frame := visual_sprite.sprite_frames.get_frame_texture(&"idle", 0)
+		idle_foot_y = (frame.get_image().get_used_rect().end.y - frame.get_height() / 2.0 - 85.0) * visual_base_scale.y
 
 
 func _process(delta: float) -> void:
@@ -132,6 +138,15 @@ func _process(delta: float) -> void:
 		queue_redraw()
 	visual_sprite.modulate = Color.WHITE.lerp(Color(1.0, 0.65, 0.58), hit_flash_timer / 0.18)
 	_update_visual_animation()
+	visual_clock += delta
+	visual_sprite.scale = visual_base_scale
+	visual_sprite.position = Vector2.ZERO
+	if visual_sprite.animation == &"idle":
+		# The atlas idle poses move equipment and boots too far for a calm stance.
+		# Breathe from one clean pose, compensating the scale at the boot anchor.
+		var breath := sin(visual_clock * 1.8 + idle_phase * 2.4) * 0.006
+		visual_sprite.scale.y = visual_base_scale.y * (1.0 + breath)
+		visual_sprite.position.y = -idle_foot_y * breath
 
 
 func _update_visual_animation() -> void:
@@ -140,16 +155,26 @@ func _update_visual_animation() -> void:
 	var wanted: StringName = &"idle"
 	if attack_fx_timer > 0.0:
 		wanted = &"attack"
-	elif velocity.length_squared() > 25.0 or state == State.MOVING or state == State.CHASING or state == State.ROUTING:
+	elif velocity.length_squared() > 1.0:
 		wanted = &"walk"
+	if wanted == &"attack" and _target_is_valid():
+		var target_direction := current_target.global_position.x - global_position.x
+		if absf(target_direction) > 1.0:
+			visual_sprite.flip_h = target_direction < 0.0
+	elif absf(velocity.x) > 1.0:
+		visual_sprite.flip_h = velocity.x < 0.0
+	visual_sprite.speed_scale = clampf(velocity.length() / move_speed, 0.45, 1.5) if wanted == &"walk" else 1.0
 	# The attack drawings sit higher on their atlas rows; keep boots anchored.
 	var role_index := 4 if is_general else clampi(unit_type, 0, 3)
 	var attack_foot_shift: float = ATTACK_FOOT_SHIFTS[role_index]
 	visual_sprite.offset = Vector2(0, -85.0 + (attack_foot_shift if wanted == &"attack" else 0.0))
-	if visual_sprite.animation != wanted or (wanted != &"attack" and not visual_sprite.is_playing()):
+	if wanted == &"idle":
+		if visual_sprite.animation != wanted:
+			visual_sprite.play(wanted)
+		if visual_sprite.is_playing() or visual_sprite.frame != 0:
+			visual_sprite.stop()
+	elif visual_sprite.animation != wanted or (wanted == &"walk" and not visual_sprite.is_playing()):
 		visual_sprite.play(wanted)
-		if wanted == &"idle":
-			visual_sprite.set_frame_and_progress(idle_phase, float(idle_phase) / 3.0)
 
 
 func move_to(point: Vector2) -> void:
@@ -157,6 +182,7 @@ func move_to(point: Vector2) -> void:
 		return
 	destination = point
 	manual_move = true
+	attack_fx_timer = 0.0
 
 
 func set_command(value: int) -> void:
@@ -255,22 +281,28 @@ func _physics_process(delta: float) -> void:
 		velocity = escape_vector.normalized() * move_speed * 1.4
 		move_and_slide()
 		return
-	if not combat_enabled:
-		if manual_move:
-			state = State.MOVING
-			_move_toward(destination)
-			if global_position.distance_to(destination) <= ARRIVAL_DISTANCE:
-				manual_move = false
-		else:
-			state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
-			velocity = Vector2.ZERO
-		move_and_slide()
-		return
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	charge_bonus_timer = maxf(0.0, charge_bonus_timer - delta)
+	if manual_move:
+		state = State.MOVING
+		_move_toward(destination, delta)
+		move_and_slide()
+		if global_position.distance_to(destination) <= ARRIVAL_DISTANCE:
+			global_position = destination
+			manual_move = false
+			velocity = Vector2.ZERO
+			state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
+		# A player's move takes priority over autonomous attacks and retreat.
+		return
+	if not combat_enabled:
+		state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
+		velocity = Vector2.ZERO
+		move_and_slide()
+		return
 	target_scan_timer -= delta
-	if target_scan_timer <= 0.0:
-		current_target = _find_nearest_enemy()
+	if target_scan_timer <= 0.0 or (current_target != null and not _target_is_valid()):
+		if not _can_keep_target():
+			current_target = _find_nearest_enemy()
 		target_scan_timer = 0.25
 
 	var threat := _nearby_melee_threat() if unit_type == UnitType.ARCHER and not manual_move and command_mode != Command.HOLD and command_mode != Command.DEFEND else null
@@ -290,27 +322,29 @@ func _physics_process(delta: float) -> void:
 			current_target.receive_damage(calculate_damage_against(current_target))
 			attack_cooldown = attack_interval
 		if threat != null:
-			_retreat_from(threat)
+			_retreat_from(threat, delta)
 	elif threat != null:
 		state = State.CHASING
-		_retreat_from(threat)
-	elif manual_move:
-		state = State.MOVING
-		_move_toward(destination)
-		if global_position.distance_to(destination) <= ARRIVAL_DISTANCE:
-			manual_move = false
+		_retreat_from(threat, delta)
 	elif _target_is_valid() and command_mode != Command.HOLD and command_mode != Command.DEFEND:
 		state = State.CHASING
-		_move_toward(current_target.global_position)
+		_move_toward(current_target.global_position, delta)
 	else:
 		state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
 		velocity = Vector2.ZERO
 	move_and_slide()
 
 
-func _move_toward(point: Vector2) -> void:
+func _move_toward(point: Vector2, delta: float) -> void:
 	var offset := point - global_position
-	velocity = Vector2.ZERO if offset.length() <= ARRIVAL_DISTANCE else offset.normalized() * move_speed * formation_speed_multiplier * command_speed_multiplier
+	var distance := offset.length()
+	if distance <= ARRIVAL_DISTANCE:
+		velocity = Vector2.ZERO
+		return
+	var speed := move_speed * formation_speed_multiplier * command_speed_multiplier
+	var accelerating_speed := move_toward(velocity.length(), speed, move_speed * 8.0 * delta)
+	# Limit the final step to the remaining distance, including on slow frames.
+	velocity = offset / distance * minf(accelerating_speed, distance / maxf(delta, 0.0001))
 
 
 func _nearby_melee_threat() -> BattleUnit:
@@ -327,17 +361,26 @@ func _nearby_melee_threat() -> BattleUnit:
 	return closest
 
 
-func _retreat_from(enemy: BattleUnit) -> void:
+func _retreat_from(enemy: BattleUnit, delta: float) -> void:
 	var direction := (global_position - enemy.global_position).normalized()
 	if direction == Vector2.ZERO:
 		direction = Vector2.LEFT if team == 0 else Vector2.RIGHT
 	var retreat_point := global_position + direction * 100.0
 	retreat_point = retreat_point.clamp(FIELD_BOUNDS.position, FIELD_BOUNDS.end)
-	_move_toward(retreat_point)
+	_move_toward(retreat_point, delta)
 
 
 func _target_is_valid() -> bool:
 	return is_instance_valid(current_target) and current_target.is_alive() and not current_target.routing
+
+
+func _can_keep_target() -> bool:
+	if not _target_is_valid():
+		return false
+	if command_mode == Command.FOCUS_TARGET or (command_mode == Command.CHARGE and not focus_targets.is_empty()):
+		return focus_targets.has(current_target)
+	var range_limit := attack_range if command_mode == Command.HOLD or command_mode == Command.DEFEND else maxf(DETECTION_RANGE, attack_range) + 24.0
+	return global_position.distance_to(current_target.global_position) <= range_limit
 
 
 func _find_nearest_enemy() -> BattleUnit:
@@ -359,7 +402,7 @@ func _find_nearest_enemy() -> BattleUnit:
 
 
 func _draw() -> void:
-	var facing := 1.0 if team == 0 else -1.0
+	var facing := -1.0 if visual_sprite.flip_h else 1.0
 	# A soft ground shadow anchors the character sprite to the field.
 	draw_set_transform(Vector2(1, 10), 0.0, Vector2(1.35, 0.38))
 	draw_circle(Vector2.ZERO, 16.0, Color(0.13, 0.19, 0.12, 0.09))

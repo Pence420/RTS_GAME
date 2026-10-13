@@ -5,6 +5,20 @@ signal general_chosen
 
 const VISUALS = preload("res://scripts/unit_visuals.gd")
 const TRAY_NODES := ["OrdersPanel", "FormationTitle", "FormationButtons", "CommandTitle", "CommandButtons", "PointerTitle", "PointerButtons"]
+const ORDER_ICONS := {
+	"FormationButtons/Line": ["line", "Line · Balanced two-rank formation"],
+	"FormationButtons/Column": ["column", "Column · Narrow formation, five ranks"],
+	"FormationButtons/ShieldWall": ["shield_wall", "Shield Wall · Less damage taken, slower movement"],
+	"FormationButtons/Wedge": ["wedge", "Wedge · More attack damage, less protection"],
+	"CommandButtons/Hold": ["hold", "Hold · Stand ground and attack enemies in reach"],
+	"CommandButtons/Advance": ["advance", "Advance · Seek and fight nearby enemies"],
+	"CommandButtons/Charge": ["charge", "Charge · Rush an enemy with a brief attack bonus"],
+	"CommandButtons/Defend": ["defend", "Defend · Stand ground with extra protection"],
+	"CommandButtons/FocusTarget": ["focus", "Focus Target · Click a red squad to concentrate attacks"],
+	"PointerButtons/Select": ["select", "Select · Click a blue squad; hold and drag it to move"],
+	"PointerButtons/Move": ["move", "Move · Click a destination for the selected squad or General"],
+	"PointerButtons/Target": ["target", "Target · Click a red squad to choose an enemy"],
+}
 
 var squads: Dictionary = {}
 var general: BattleUnit
@@ -13,6 +27,15 @@ var portrait_cache: Dictionary = {}
 
 
 func _ready() -> void:
+	for path in ORDER_ICONS:
+		var button: Button = get_node(path)
+		button.text = ""
+		button.icon = load("res://assets/ui/orders/%s.svg" % ORDER_ICONS[path][0])
+		button.tooltip_text = ORDER_ICONS[path][1]
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		button.expand_icon = true
+		button.add_theme_constant_override("icon_max_width", 26)
+		button.custom_minimum_size = Vector2(46, 46)
 	$OrdersToggle.pressed.connect(_toggle_orders)
 	$GeneralSlot.pressed.connect(func(): general_chosen.emit())
 	for letter in ["A", "B", "C", "D"]:
