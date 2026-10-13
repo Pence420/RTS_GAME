@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.055, 0.085, 0.097, 0.96)
+bg_color = Color(0.075, 0.105, 0.095, 0.96)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -29,7 +29,7 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secondary"]
-bg_color = Color(0.12, 0.18, 0.19, 1)
+bg_color = Color(0.14, 0.19, 0.17, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -47,6 +47,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+texture_filter = 2
 script = ExtResource("1_menu")
 
 [node name="LeftAccent" type="ColorRect" parent="."]

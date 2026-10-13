@@ -1,6 +1,7 @@
 extends Control
 
 const BATTLE_SCENE := "res://scenes/battle.tscn"
+const MENU_TERRAIN: Texture2D = preload("res://assets/terrain/battlefield_smooth.png")
 const SETTINGS = preload("res://scripts/game_settings.gd")
 
 var settings: Dictionary
@@ -80,22 +81,5 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var size := get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, size), Color("101c20"))
-	# A simple map behind the menu makes this screen feel connected to the battle.
-	for row in range(7):
-		for column in range(14):
-			var cell := Rect2(column * 88.0, row * 96.0, 88.0, 96.0)
-			var tint := Color("283b35") if (column + row) % 3 == 0 else Color("30443a")
-			draw_rect(cell, tint)
-	for index in range(15):
-		var origin := Vector2(40.0 + index * 83.0, 105.0 + float((index * 139) % 430))
-		draw_rect(Rect2(origin, Vector2(50, 17)), Color("566a49", 0.28))
-	draw_line(Vector2(0, size.y * 0.72), Vector2(size.x, size.y * 0.26), Color("c5ad73", 0.23), 74.0)
-	draw_line(Vector2(0, size.y * 0.72), Vector2(size.x, size.y * 0.26), Color("f4dfac", 0.17), 2.0)
-	for row in range(3):
-		for column in range(7):
-			var blue := Vector2(80 + column * 24, 380 + row * 27)
-			var red := Vector2(size.x - 440 + column * 24, 180 + row * 27)
-			draw_rect(Rect2(blue, Vector2(13, 17)), Color("4a8abb"))
-			draw_rect(Rect2(red, Vector2(13, 17)), Color("c46b5b"))
-	draw_rect(Rect2(0, 0, size.x, size.y), Color("071116", 0.47))
+	draw_texture_rect(MENU_TERRAIN, Rect2(Vector2.ZERO, size), false)
+	draw_rect(Rect2(Vector2.ZERO, size), Color("101c1b", 0.62))

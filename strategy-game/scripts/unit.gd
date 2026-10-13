@@ -347,8 +347,8 @@ func _draw() -> void:
 	var facing := 1.0 if team == 0 else -1.0
 	# A soft ground shadow anchors the character sprite to the field.
 	draw_set_transform(Vector2(1, 10), 0.0, Vector2(1.35, 0.38))
-	draw_circle(Vector2.ZERO, 15.0, Color(0.08, 0.16, 0.13, 0.12))
-	draw_circle(Vector2.ZERO, 11.0, Color(0.08, 0.16, 0.13, 0.2))
+	draw_circle(Vector2.ZERO, 16.0, Color(0.13, 0.19, 0.12, 0.09))
+	draw_circle(Vector2.ZERO, 10.0, Color(0.12, 0.17, 0.11, 0.16))
 	draw_set_transform(Vector2.ZERO)
 	if is_general and selected:
 		draw_arc(Vector2.ZERO, GENERAL_RADIUS, 0.0, TAU, 64, Color(0.95, 0.77, 0.38, 0.25), 2.0)
@@ -357,17 +357,17 @@ func _draw() -> void:
 		draw_arc(Vector2.ZERO, 21.0, 0.0, TAU, 28, Color("f6df85"), 2.5)
 		draw_set_transform(Vector2.ZERO)
 	if attack_fx_timer > 0.0 and unit_type != UnitType.ARCHER:
-		draw_arc(Vector2(facing * 18.0, -8), 12.0, -1.6, 0.6, 12, Color(1.0, 0.91, 0.62, attack_fx_timer / 0.19), 2.5)
+		draw_arc(Vector2(facing * 18.0, -8), 12.0, -1.6, 0.6, 12, Color(0.96, 0.88, 0.68, attack_fx_timer / 0.19 * 0.72), 1.7)
 	if shot_trace_timer > 0.0:
 		var start := Vector2(facing * 16.0, -8.0)
 		var direction := (shot_trace_end - start).normalized()
 		var tip := shot_trace_end
 		var side := Vector2(-direction.y, direction.x)
 		var alpha := shot_trace_timer / 0.12
-		draw_line(start, tip, Color(0.99, 0.87, 0.58, alpha), 2.0)
-		draw_colored_polygon(PackedVector2Array([tip, tip - direction * 8.0 + side * 3.0, tip - direction * 8.0 - side * 3.0]), Color(1.0, 0.94, 0.72, alpha))
+		draw_line(start, tip, Color(0.91, 0.85, 0.67, alpha * 0.8), 1.6)
+		draw_colored_polygon(PackedVector2Array([tip, tip - direction * 8.0 + side * 2.5, tip - direction * 8.0 - side * 2.5]), Color(0.94, 0.9, 0.75, alpha * 0.8))
 	if hit_flash_timer > 0.0:
-		draw_arc(Vector2(0, -7), 15.0 + (0.18 - hit_flash_timer) * 30.0, 0.0, TAU, 20, Color(1.0, 0.91, 0.61, hit_flash_timer / 0.18 * 0.7), 2.0)
+		draw_arc(Vector2(0, -7), 15.0 + (0.18 - hit_flash_timer) * 30.0, 0.0, TAU, 20, Color(0.98, 0.88, 0.68, hit_flash_timer / 0.18 * 0.45), 1.5)
 	if routing:
 		draw_arc(Vector2(0, 9), 16.0, 0.0, TAU, 20, Color("ded7bd"), 1.5)
 	if selected or is_general or current_hp < max_hp:

@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/game_menu.tscn" id="4_menu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
-bg_color = Color(0.105, 0.145, 0.165, 1)
+bg_color = Color(0.12, 0.16, 0.145, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -18,7 +18,7 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
-bg_color = Color(0.18, 0.24, 0.25, 1)
+bg_color = Color(0.2, 0.25, 0.21, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -63,7 +63,7 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
-bg_color = Color(0.115, 0.165, 0.18, 1)
+bg_color = Color(0.13, 0.175, 0.15, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -92,7 +92,7 @@ script = ExtResource("3_enemy_ai")
 [node name="TopBar" type="ColorRect" parent="CanvasLayer"]
 anchor_right = 1.0
 offset_bottom = 66.0
-color = Color(0.065, 0.095, 0.11, 1)
+color = Color(0.07, 0.105, 0.095, 1)
 
 [node name="TopRule" type="ColorRect" parent="CanvasLayer"]
 anchor_right = 1.0
@@ -156,7 +156,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = -156.0
-color = Color(0.065, 0.095, 0.11, 0.98)
+color = Color(0.07, 0.105, 0.095, 0.98)
 
 [node name="BottomRule" type="ColorRect" parent="CanvasLayer"]
 anchor_top = 1.0

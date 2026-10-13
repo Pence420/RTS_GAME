@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/game_menu.gd" id="1_menu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
-bg_color = Color(0.075, 0.11, 0.125, 1)
+bg_color = Color(0.09, 0.13, 0.115, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -32,7 +32,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.02, 0.035, 0.045, 0.9)
+color = Color(0.025, 0.04, 0.035, 0.9)
 
 [node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
