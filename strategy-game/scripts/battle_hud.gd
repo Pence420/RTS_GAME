@@ -10,11 +10,8 @@ const ORDER_ICONS := {
 	"FormationButtons/Column": ["column", "Column · Narrow formation, five ranks"],
 	"FormationButtons/ShieldWall": ["shield_wall", "Shield Wall · Less damage taken, slower movement"],
 	"FormationButtons/Wedge": ["wedge", "Wedge · More attack damage, less protection"],
-	"CommandButtons/Hold": ["hold", "Hold · Stand ground and attack enemies in reach"],
-	"CommandButtons/Advance": ["advance", "Advance · Seek and fight nearby enemies"],
-	"CommandButtons/Charge": ["charge", "Charge · Rush an enemy with a brief attack bonus"],
-	"CommandButtons/Defend": ["defend", "Defend · Stand ground with extra protection"],
-	"CommandButtons/FocusTarget": ["focus", "Focus Target · Click a red squad to concentrate attacks"],
+	"CommandButtons/FullAttack": ["charge", "Full Attack · Aggressive pursuit and charges; right-click an enemy to choose the target"],
+	"CommandButtons/Defend": ["defend", "Defend · Guard the formation, counter nearby enemies, and retain protection while repositioning"],
 	"PointerButtons/Select": ["select", "Select · Click a blue squad; hold and drag it to move"],
 	"PointerButtons/Move": ["move", "Move · Click a destination for the selected squad or General"],
 	"PointerButtons/Target": ["target", "Target · Click a red squad to choose an enemy"],
@@ -48,6 +45,7 @@ func _ready() -> void:
 		badge.add_theme_color_override("font_color", Color("ded8b9"))
 		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.add_child(badge)
+	$CommandButtons.move_child($CommandButtons/Defend, 0)
 	set_orders_open(false)
 
 

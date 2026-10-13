@@ -25,7 +25,7 @@ const UNIT_VISUALS = preload("res://scripts/unit_visuals.gd")
 const ATTACK_FOOT_SHIFTS := [14.0, 40.0, 20.0, 19.0, 5.0]
 
 enum State { IDLE, MOVING, CHASING, ATTACKING, HOLDING, ROUTING, DEAD }
-enum Command { HOLD, ADVANCE, CHARGE, DEFEND, FOCUS_TARGET }
+enum Command { HOLD, ADVANCE, CHARGE, DEFEND, FOCUS_TARGET, GUARD }
 enum UnitType { SWORDSMAN, SPEARMAN, AXEMAN, ARCHER }
 const TYPE_NAMES := ["Swordsman", "Spearman", "Axeman", "Archer"]
 
@@ -74,6 +74,9 @@ var squad_attached := false
 var autonomous_order := false
 var regrouping := false
 var guarded_allies: Array[BattleUnit] = []
+var guard_anchor := Vector2.ZERO
+var stance_defending := false
+var travel_speed_multiplier := 1.0
 
 @onready var visual_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -121,6 +124,7 @@ func get_type_name() -> String:
 
 func _ready() -> void:
 	destination = global_position
+	guard_anchor = global_position
 	visual_base_scale = visual_sprite.scale
 	add_to_group("team_%d" % team)
 	add_to_group("battle_units")
@@ -197,10 +201,11 @@ func _update_visual_animation() -> void:
 		visual_sprite.play(wanted)
 
 
-func move_to(point: Vector2) -> void:
+func move_to(point: Vector2, running: bool = false) -> void:
 	if routing:
 		return
 	destination = point
+	travel_speed_multiplier = 1.35 if running else 1.0
 	manual_move = true
 	blocked_time = 0.0
 	arrival_wait_timer = 0.0
@@ -211,6 +216,8 @@ func set_command(value: int) -> void:
 	if routing:
 		return
 	command_mode = value
+	guard_anchor = global_position
+	travel_speed_multiplier = 1.0
 	autonomous_order = false
 	regrouping = false
 	retreat_target = null
@@ -219,9 +226,9 @@ func set_command(value: int) -> void:
 	focus_targets = []
 	charge_bonus_ready = value == Command.CHARGE
 	charge_bonus_timer = 0.0
-	command_damage_taken_multiplier = 0.8 if value == Command.DEFEND else 1.0
-	command_speed_multiplier = 0.8 if value == Command.DEFEND else (1.35 if value == Command.CHARGE else 1.0)
-	if value == Command.HOLD or value == Command.DEFEND or value == Command.CHARGE or value == Command.FOCUS_TARGET:
+	command_damage_taken_multiplier = 0.8 if value == Command.DEFEND or stance_defending else 1.0
+	command_speed_multiplier = 0.8 if value == Command.DEFEND or stance_defending else (1.35 if value == Command.CHARGE else 1.0)
+	if value == Command.HOLD or value == Command.DEFEND or value == Command.CHARGE or value == Command.FOCUS_TARGET or value == Command.GUARD:
 		manual_move = false
 		destination = global_position
 		velocity = Vector2.ZERO
@@ -322,6 +329,8 @@ func _physics_process(delta: float) -> void:
 			if arrived:
 				global_position = destination
 			manual_move = false
+			guard_anchor = global_position
+			travel_speed_multiplier = 1.0
 			velocity = Vector2.ZERO
 			state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
 		# A player's move takes priority over autonomous attacks and retreat.
@@ -365,18 +374,34 @@ func _physics_process(delta: float) -> void:
 	elif threat != null:
 		state = State.CHASING
 		_retreat_from(threat, delta)
-	elif _target_is_valid() and command_mode != Command.HOLD and command_mode != Command.DEFEND:
+	elif _target_is_valid() and command_mode != Command.HOLD:
 		state = State.CHASING
 		var may_regroup := squad_attached and (command_mode == Command.ADVANCE or autonomous_order)
 		if may_regroup and global_position.distance_to(squad_center) > COHESION_LIMIT:
 			regrouping = true
 		if not may_regroup or global_position.distance_to(squad_center) < 110.0:
 			regrouping = false
-		_move_toward(squad_center if regrouping else current_target.global_position, delta)
+		var goal := squad_center if regrouping else current_target.global_position
+		if _guards_position():
+			var leash := 60.0 if command_mode == Command.DEFEND else 95.0
+			goal = guard_anchor + (goal - guard_anchor).limit_length(leash)
+		_move_toward(goal, delta)
+	elif _guards_position() and global_position.distance_to(guard_anchor) > 1.0:
+		state = State.MOVING
+		_move_toward(guard_anchor, delta)
 	else:
 		state = State.HOLDING if command_mode == Command.HOLD or command_mode == Command.DEFEND else State.IDLE
 		velocity = Vector2.ZERO
 	_move_with_bodies(delta)
+
+
+func _movement_speed() -> float:
+	# Full Attack accelerates combat pursuit. Ground movement still obeys
+	# the player's walk/run choice, without stacking two charge bonuses.
+	var command_factor := command_speed_multiplier
+	if manual_move and command_mode == Command.CHARGE and not stance_defending:
+		command_factor = 1.0
+	return move_speed * formation_speed_multiplier * command_factor * (travel_speed_multiplier if manual_move else 1.0)
 
 
 func _move_toward(point: Vector2, delta: float) -> void:
@@ -385,7 +410,7 @@ func _move_toward(point: Vector2, delta: float) -> void:
 	if distance <= ARRIVAL_DISTANCE:
 		velocity = Vector2.ZERO
 		return
-	var speed := move_speed * formation_speed_multiplier * command_speed_multiplier
+	var speed := _movement_speed()
 	var accelerating_speed := move_toward(velocity.length(), speed, move_speed * 8.0 * delta)
 	# Limit the final step to the remaining distance, including on slow frames.
 	velocity = offset / distance * minf(accelerating_speed, distance / maxf(delta, 0.0001))
@@ -420,7 +445,7 @@ func _move_with_bodies(delta: float) -> void:
 			var weight := (1.0 - ahead / lookahead) * (1.0 - absf(lateral) / PERSONAL_SPACE)
 			steering += side * pass_side * requested.length() * weight * 2.5
 	velocity += steering
-	var maximum_speed := move_speed * formation_speed_multiplier * command_speed_multiplier * (1.4 if routing else 1.0)
+	var maximum_speed := _movement_speed() * (1.4 if routing else 1.0)
 	velocity = velocity.limit_length(maximum_speed)
 	var before := global_position
 	move_and_slide()
@@ -504,13 +529,15 @@ func _can_keep_target() -> bool:
 		return false
 	if command_mode == Command.FOCUS_TARGET or (command_mode == Command.CHARGE and not focus_targets.is_empty()):
 		return focus_targets.has(current_target)
-	var range_limit := get_contact_reach() if command_mode == Command.HOLD or command_mode == Command.DEFEND else maxf(DETECTION_RANGE, attack_range) + 24.0
+	if _guards_position() and guard_anchor.distance_to(current_target.global_position) > _guard_detection_range():
+		return false
+	var range_limit := get_contact_reach() if command_mode == Command.HOLD else (_guard_detection_range() if _guards_position() else maxf(DETECTION_RANGE, attack_range) + 24.0)
 	return global_position.distance_to(current_target.global_position) <= range_limit
 
 
 func _find_nearest_enemy() -> BattleUnit:
 	var closest: BattleUnit
-	var nearest_distance := get_contact_reach() if command_mode == Command.HOLD or command_mode == Command.DEFEND else maxf(DETECTION_RANGE, attack_range)
+	var nearest_distance := get_contact_reach() if command_mode == Command.HOLD else (_guard_detection_range() if _guards_position() else maxf(DETECTION_RANGE, attack_range))
 	var candidates: Array[Node] = get_tree().get_nodes_in_group("team_%d" % (1 - team))
 	if command_mode == Command.FOCUS_TARGET or (command_mode == Command.CHARGE and not focus_targets.is_empty()):
 		candidates.assign(focus_targets)
@@ -529,12 +556,22 @@ func _find_nearest_enemy() -> BattleUnit:
 		var enemy := node as BattleUnit
 		if enemy == null or not enemy.is_alive() or enemy.routing:
 			continue
+		if _guards_position() and guard_anchor.distance_to(enemy.global_position) > _guard_detection_range():
+			continue
 		var distance := global_position.distance_to(enemy.global_position)
 		var score := _target_score(enemy, claims)
 		if distance <= range_limit and score < nearest_distance:
 			nearest_distance = score
 			closest = enemy
 	return closest
+
+
+func _guards_position() -> bool:
+	return command_mode == Command.GUARD or command_mode == Command.DEFEND
+
+
+func _guard_detection_range() -> float:
+	return maxf(attack_range, 90.0 if command_mode == Command.DEFEND else 130.0)
 
 
 func _target_score(enemy: BattleUnit, claims: Dictionary) -> float:

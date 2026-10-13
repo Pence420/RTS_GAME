@@ -69,18 +69,18 @@ func _random_order(battle: Node2D) -> void:
 		0:
 			battle.call("_on_formation_pressed", rng.randi_range(0, 3))
 		1:
-			battle.call("_on_command_pressed", rng.randi_range(0, 4))
+			battle.call("_on_stance_pressed", rng.randi_range(1, 2))
 		2:
-			battle.call("_issue_right_click", Vector2(rng.randf_range(200.0, 1400.0), rng.randf_range(180.0, 720.0)))
+			battle.call("_issue_right_click", Vector2(rng.randf_range(200.0, 1400.0), rng.randf_range(180.0, 720.0)), rng.randi_range(0, 1) == 1)
 		3:
 			if not red.is_empty():
 				var enemy: BattleSquad = red[rng.randi_range(0, red.size() - 1)]
 				if not enemy.routing and not enemy.units.is_empty():
 					battle.call("_issue_right_click", enemy.units[0].global_position)
 		4:
-			battle.call("_on_command_pressed", BattleSquad.Command.CHARGE)
+			battle.call("_on_stance_pressed", BattleSquad.Stance.FULL_ATTACK)
 		5:
-			battle.call("_on_command_pressed", BattleSquad.Command.FOCUS_TARGET)
+			battle.call("_on_pointer_mode_pressed", 2)
 			if not red.is_empty():
 				var enemy: BattleSquad = red[rng.randi_range(0, red.size() - 1)]
 				if not enemy.routing and not enemy.units.is_empty():

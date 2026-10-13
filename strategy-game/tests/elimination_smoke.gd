@@ -26,7 +26,7 @@ func _run() -> void:
 	if hunter.target_squad != null or hunter.command != BattleSquad.Command.ADVANCE:
 		_fail("Hunter did not clear its eliminated target.")
 		return
-	if not battle.get_node("CanvasLayer/CommandButtons/Hold").disabled:
+	if not battle.get_node("CanvasLayer/CommandButtons/Defend").disabled:
 		_fail("Command buttons stayed enabled after the selected squad died.")
 		return
 	if battle.get("battle_result") != "":

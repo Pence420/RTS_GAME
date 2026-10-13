@@ -15,8 +15,9 @@ const GENERAL_MORALE_BONUS := 10.0
 
 enum Formation { LINE, COLUMN, SHIELD_WALL, WEDGE }
 const FORMATION_NAMES := ["Line", "Column", "Shield Wall", "Wedge"]
-enum Command { HOLD, ADVANCE, CHARGE, DEFEND, FOCUS_TARGET }
-const COMMAND_NAMES := ["Hold", "Advance", "Charge", "Defend", "Focus Target"]
+enum Command { HOLD, ADVANCE, CHARGE, DEFEND, FOCUS_TARGET, GUARD }
+enum Stance { AUTO, DEFEND, FULL_ATTACK }
+const COMMAND_NAMES := ["Hold", "Advance", "Charge", "Defend", "Attack", "Guard"]
 
 var squad_id := ""
 var team := 0
@@ -24,7 +25,9 @@ var unit_type := BattleUnit.UnitType.SWORDSMAN
 var selected := false
 var formation := Formation.LINE
 var command := Command.ADVANCE
+var stance := Stance.AUTO
 var target_squad: BattleSquad
+var target_general: BattleUnit
 var general: BattleUnit
 var morale := 75.0
 var routing := false
@@ -68,7 +71,7 @@ func _process(delta: float) -> void:
 		aura_check_timer = 0.25
 
 
-func move_to(center: Vector2) -> void:
+func move_to(center: Vector2, running: bool = false) -> void:
 	if routing:
 		return
 	_assign_formation_slots(center)
@@ -80,7 +83,7 @@ func move_to(center: Vector2) -> void:
 	center = center.clamp(BattleUnit.FIELD_BOUNDS.position - minimum, BattleUnit.FIELD_BOUNDS.end - Vector2.ONE - maximum)
 	ordered_center = center
 	for unit in units:
-		unit.move_to(center + slots[unit])
+		unit.move_to(center + slots[unit], running)
 
 
 func _assign_formation_slots(center: Vector2) -> void:
@@ -187,6 +190,7 @@ func _check_routing() -> void:
 		return
 	routing = true
 	target_squad = null
+	target_general = null
 	for unit in units:
 		var exit_x := 16.0 if team == 0 else 1584.0
 		unit.start_routing(Vector2(exit_x, clampf(unit.global_position.y, 16.0, 884.0)))
@@ -196,12 +200,37 @@ func _check_routing() -> void:
 func set_command(value: int) -> void:
 	if routing:
 		return
-	if value < Command.HOLD or value > Command.FOCUS_TARGET:
+	if value < Command.HOLD or value > Command.GUARD:
 		return
 	command = value
 	target_squad = null
+	target_general = null
 	for unit in units:
 		unit.set_command(value)
+
+
+func set_stance(value: int) -> void:
+	if routing or value < Stance.AUTO or value > Stance.FULL_ATTACK:
+		return
+	stance = value
+	var moving := {}
+	for unit in units:
+		if unit.manual_move:
+			moving[unit] = [unit.destination, unit.travel_speed_multiplier > 1.0]
+		unit.stance_defending = value == Stance.DEFEND
+	var target := target_squad
+	var commander := target_general
+	resume_stance()
+	if value == Stance.FULL_ATTACK and is_instance_valid(target) and not target.routing and not target.units.is_empty():
+		set_target(target, Command.CHARGE)
+	elif value == Stance.FULL_ATTACK and is_instance_valid(commander) and commander.is_alive():
+		set_general_target(commander, Command.CHARGE)
+	for unit in moving:
+		unit.move_to(moving[unit][0], moving[unit][1])
+
+
+func resume_stance() -> void:
+	set_command(Command.DEFEND if stance == Stance.DEFEND else (Command.CHARGE if stance == Stance.FULL_ATTACK else Command.GUARD))
 
 
 func set_target(enemy_squad: BattleSquad, value: int) -> void:
@@ -215,6 +244,15 @@ func set_target(enemy_squad: BattleSquad, value: int) -> void:
 	target_squad = enemy_squad
 	for unit in units:
 		unit.set_focus_targets(enemy_squad.units)
+
+
+func set_general_target(enemy: BattleUnit, value: int) -> void:
+	if routing or not is_instance_valid(enemy) or not enemy.is_alive() or (value != Command.CHARGE and value != Command.FOCUS_TARGET):
+		return
+	set_command(value)
+	target_general = enemy
+	for unit in units:
+		unit.set_focus_targets([enemy])
 
 
 func get_command_name() -> String:

@@ -63,7 +63,7 @@ func _run() -> void:
 	if not status.text.contains("Swordsman") or not status.text.contains("HP 100%"):
 		_fail("Selected squad details did not appear in the HUD.")
 		return
-	battle.get_node("CanvasLayer/CommandButtons/FocusTarget").emit_signal("pressed")
+	battle.get_node("CanvasLayer/PointerButtons/Target").emit_signal("pressed")
 	if not status.text.contains("Left-click a red squad") or status.text.count("\n") > 3:
 		_fail("Focus prompt overflows the selection card.")
 		return

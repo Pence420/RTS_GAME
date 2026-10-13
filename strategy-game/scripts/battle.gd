@@ -43,11 +43,8 @@ var battle_result := ""
 	$CanvasLayer/FormationButtons/Wedge
 ]
 @onready var command_buttons: Array[Button] = [
-	$CanvasLayer/CommandButtons/Hold,
-	$CanvasLayer/CommandButtons/Advance,
-	$CanvasLayer/CommandButtons/Charge,
 	$CanvasLayer/CommandButtons/Defend,
-	$CanvasLayer/CommandButtons/FocusTarget
+	$CanvasLayer/CommandButtons/FullAttack
 ]
 @onready var pointer_buttons: Array[Button] = [
 	$CanvasLayer/PointerButtons/Select,
@@ -66,7 +63,7 @@ func _ready() -> void:
 	for index in range(formation_buttons.size()):
 		formation_buttons[index].pressed.connect(_on_formation_pressed.bind(index))
 	for index in range(command_buttons.size()):
-		command_buttons[index].pressed.connect(_on_command_pressed.bind(index))
+		command_buttons[index].pressed.connect(_on_stance_pressed.bind(index + 1))
 	for index in range(pointer_buttons.size()):
 		pointer_buttons[index].pressed.connect(_on_pointer_mode_pressed.bind(index))
 	zoom_in_button.pressed.connect(Callable(battle_camera, "zoom_in"))
@@ -244,6 +241,7 @@ func _spawn_squad(team: int, squad_id: String, unit_type: int, start_position: V
 	squad.morale_changed.connect(_on_squad_morale_changed)
 	squad.routed.connect(_on_squad_routed)
 	if team == 0:
+		squad.resume_stance()
 		player_squads.append(squad)
 	else:
 		enemy_squads.append(squad)
@@ -311,7 +309,7 @@ func _on_squad_routed(squad: BattleSquad) -> void:
 func _clear_targets_for(squad: BattleSquad) -> void:
 	for ally in player_squads:
 		if ally.target_squad == squad:
-			ally.set_command(BattleSquad.Command.ADVANCE)
+			ally.resume_stance()
 	for ally in enemy_squads:
 		if ally.target_squad == squad:
 			ally.set_command(BattleSquad.Command.ADVANCE)
@@ -329,6 +327,15 @@ func _on_general_died(general: BattleUnit) -> void:
 		player_general = null
 	else:
 		enemy_general = null
+	for squad in player_squads + enemy_squads:
+		if squad.target_general == general:
+			if squad.team == 0:
+				squad.resume_stance()
+			else:
+				squad.set_command(BattleSquad.Command.ADVANCE)
+	for commander in [player_general, enemy_general]:
+		if is_instance_valid(commander) and commander.is_alive() and commander.focus_targets.has(general):
+			commander.set_command(BattleUnit.Command.HOLD)
 	_update_status()
 	_update_command_buttons()
 	_update_formation_buttons()
@@ -342,7 +349,7 @@ func _update_status() -> void:
 	blue_count_label.text = "BLUE  %02d" % blue_count
 	red_count_label.text = "RED  %02d" % red_count
 	var detail := "Choose a squad\nDrag empty ground to pan"
-	var tooltip := "Select a blue squad or use a portrait below.\nHold and drag the selected squad to move.\nDrag empty ground to pan. Orders contains alternate click controls."
+	var tooltip := "Select a blue squad or use a portrait below.\nHold and drag the selected squad to move.\nDouble right-click to run. Right-click an enemy to attack. Drag empty ground to pan."
 	if selected_general != null:
 		detail = "General\nHP %d/%d · Rally aura" % [roundi(selected_general.current_hp), roundi(selected_general.max_hp)]
 		tooltip = "General aura: +10 morale and +5% damage.\nHold and drag to reposition."
@@ -354,10 +361,12 @@ func _update_status() -> void:
 			order_detail = "Left-click destination to move"
 		elif pointer_mode == PointerMode.TARGET or pending_focus_target:
 			order_detail = "Left-click a red squad to focus"
+		elif is_instance_valid(selected_squad.target_general):
+			order_detail = "%s  →  General" % selected_squad.get_command_name()
 		elif selected_squad.target_squad != null:
 			order_detail = "%s  →  %s" % [selected_squad.get_command_name(), selected_squad.target_squad.squad_id]
 		detail = "%s · %s\n%s" % [selected_squad.squad_id, selected_squad.get_unit_type_name(), order_detail]
-		tooltip = "Morale %d · %s\n%s · %s\nHold and drag this squad to move." % [roundi(selected_squad.get_effective_morale()), selected_squad.get_morale_state(), selected_squad.get_command_name(), selected_squad.get_formation_name()]
+		tooltip = "Morale %d · %s\n%s · %s\nRight-click ground to move; double right-click to run. Right-click an enemy to attack. Drag this squad to reposition." % [roundi(selected_squad.get_effective_morale()), selected_squad.get_morale_state(), selected_squad.get_command_name(), selected_squad.get_formation_name()]
 	status_label.text = detail
 	status_label.tooltip_text = tooltip
 	hud.refresh(selected_squad, selected_general, blue_count, red_count)
@@ -422,7 +431,7 @@ func _is_gameplay_point(point: Vector2) -> bool:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and _is_gameplay_point(event.position) and (selected_squad != null or selected_general != null):
-		_issue_right_click(get_global_mouse_position())
+		_issue_right_click(_screen_to_world(event.position), event.double_click)
 
 
 func _handle_primary_click(point: Vector2) -> void:
@@ -437,54 +446,71 @@ func _handle_primary_click(point: Vector2) -> void:
 				_set_pointer_mode(PointerMode.SELECT)
 
 
-func _issue_right_click(point: Vector2) -> void:
-	if selected_general != null:
-		_issue_move(point)
-		_set_pointer_mode(PointerMode.SELECT)
-		return
-	if selected_squad == null:
+func _issue_right_click(point: Vector2, running: bool = false) -> void:
+	if selected_squad == null and selected_general == null:
 		return
 	var enemy := _enemy_squad_at(point)
-	if enemy != null:
-		var command := BattleSquad.Command.CHARGE if selected_squad.command == BattleSquad.Command.CHARGE and not pending_focus_target else BattleSquad.Command.FOCUS_TARGET
-		_issue_target(point, command)
-		_set_pointer_mode(PointerMode.SELECT)
-	elif not pending_focus_target:
-		_issue_move(point)
-		_set_pointer_mode(PointerMode.SELECT)
+	var commander := _enemy_general_at(point)
+	if enemy != null or commander != null:
+		var aggressive := selected_squad != null and selected_squad.stance == BattleSquad.Stance.FULL_ATTACK
+		_issue_target(point, BattleSquad.Command.CHARGE if aggressive or running else BattleSquad.Command.FOCUS_TARGET)
+	else:
+		_issue_move(point, running)
+	_set_pointer_mode(PointerMode.SELECT)
 
 
-func _issue_move(point: Vector2) -> bool:
+func _issue_move(point: Vector2, running: bool = false) -> bool:
 	if selected_general != null:
+		selected_general.set_command(BattleUnit.Command.HOLD)
 		selected_general.move_to(Vector2(
 			clampf(point.x, 20.0, FIELD_SIZE.x - 20.0),
 			clampf(point.y, 20.0, FIELD_SIZE.y - 20.0)
-		))
+		), running)
 		return true
 	if selected_squad == null or selected_squad.routing:
 		return false
-	if selected_squad.target_squad != null or selected_squad.command == BattleSquad.Command.HOLD or selected_squad.command == BattleSquad.Command.FOCUS_TARGET or selected_squad.command == BattleSquad.Command.CHARGE:
-		selected_squad.set_command(BattleSquad.Command.ADVANCE)
+	selected_squad.resume_stance()
 	selected_squad.move_to(Vector2(
 		clampf(point.x, 160.0, FIELD_SIZE.x - 160.0),
 		clampf(point.y, 170.0, FIELD_SIZE.y - 170.0)
-	))
+	), running)
 	_update_status()
 	_update_command_buttons()
 	return true
 
 
 func _issue_target(point: Vector2, command: int) -> bool:
-	if selected_squad == null or selected_squad.routing:
-		return false
+	if selected_squad != null and selected_squad.stance == BattleSquad.Stance.FULL_ATTACK:
+		command = BattleSquad.Command.CHARGE
 	var enemy := _enemy_squad_at(point)
-	if enemy == null:
+	var commander := _enemy_general_at(point)
+	if enemy == null and commander == null:
 		return false
-	selected_squad.set_target(enemy, command)
+	if selected_general != null:
+		selected_general.set_command(command)
+		var targets: Array[BattleUnit] = []
+		if enemy != null:
+			targets = enemy.units
+		else:
+			targets.append(commander)
+		selected_general.set_focus_targets(targets)
+	elif selected_squad != null and not selected_squad.routing:
+		if enemy != null:
+			selected_squad.set_target(enemy, command)
+		else:
+			selected_squad.set_general_target(commander, command)
+	else:
+		return false
 	pending_focus_target = false
 	_update_status()
 	_update_command_buttons()
 	return true
+
+
+func _enemy_general_at(point: Vector2) -> BattleUnit:
+	if is_instance_valid(enemy_general) and enemy_general.is_alive() and enemy_general.global_position.distance_to(point) < BattleSquad.PICK_RADIUS:
+		return enemy_general
+	return null
 
 
 func _enemy_squad_at(point: Vector2) -> BattleSquad:
@@ -500,40 +526,17 @@ func _enemy_squad_at(point: Vector2) -> BattleSquad:
 	return closest
 
 
-func _nearest_enemy_squad(point: Vector2) -> BattleSquad:
-	var nearest := INF
-	var closest: BattleSquad
-	for squad in enemy_squads:
-		if squad.routing:
-			continue
-		var distance := squad.get_center().distance_to(point)
-		if distance < nearest:
-			nearest = distance
-			closest = squad
-	return closest
-
-
-func _on_command_pressed(index: int) -> void:
+func _on_stance_pressed(value: int) -> void:
 	if selected_squad == null or selected_squad.routing:
 		return
-	if index == BattleSquad.Command.FOCUS_TARGET:
-		_set_pointer_mode(PointerMode.TARGET)
-		return
-	elif index == BattleSquad.Command.CHARGE:
-		var enemy := _nearest_enemy_squad(selected_squad.get_center())
-		if enemy != null:
-			selected_squad.set_target(enemy, BattleSquad.Command.CHARGE)
-		else:
-			selected_squad.set_command(BattleSquad.Command.CHARGE)
-	else:
-		selected_squad.set_command(index)
+	selected_squad.set_stance(BattleSquad.Stance.AUTO if selected_squad.stance == value else value)
 	_set_pointer_mode(PointerMode.SELECT)
 
 
 func _on_pointer_mode_pressed(index: int) -> void:
 	if index == PointerMode.MOVE and selected_squad == null and selected_general == null:
 		return
-	if index == PointerMode.TARGET and (selected_squad == null or selected_squad.routing):
+	if index == PointerMode.TARGET and (selected_squad == null and selected_general == null or selected_squad != null and selected_squad.routing):
 		return
 	_set_pointer_mode(index)
 
@@ -548,14 +551,14 @@ func _set_pointer_mode(value: int) -> void:
 
 func _update_pointer_buttons() -> void:
 	for index in range(pointer_buttons.size()):
-		pointer_buttons[index].disabled = (index == PointerMode.MOVE and selected_squad == null and selected_general == null) or (index == PointerMode.TARGET and (selected_squad == null or selected_squad.routing))
+		pointer_buttons[index].disabled = (index == PointerMode.MOVE and selected_squad == null and selected_general == null) or (index == PointerMode.TARGET and (selected_squad == null and selected_general == null or selected_squad != null and selected_squad.routing))
 		pointer_buttons[index].button_pressed = index == pointer_mode
 
 
 func _update_command_buttons() -> void:
 	for index in range(command_buttons.size()):
 		command_buttons[index].disabled = selected_squad == null or selected_squad.routing
-		command_buttons[index].button_pressed = selected_squad != null and (index == BattleSquad.Command.FOCUS_TARGET if pending_focus_target else selected_squad.command == index)
+		command_buttons[index].button_pressed = selected_squad != null and selected_squad.stance == index + 1
 
 
 func _on_formation_pressed(index: int) -> void:

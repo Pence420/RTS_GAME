@@ -50,7 +50,7 @@ func _run() -> void:
 	if blue.target_squad != red or battle.get("pointer_mode") != 0:
 		_fail("Left-click target did not focus the enemy squad.")
 		return
-	battle.get_node("CanvasLayer/CommandButtons/FocusTarget").emit_signal("pressed")
+	battle.get_node("CanvasLayer/PointerButtons/Target").emit_signal("pressed")
 	if battle.get("pointer_mode") != 2 or not battle.get_node("CanvasLayer/Status").text.contains("Left-click"):
 		_fail("Focus Target did not provide a touchpad-friendly left-click prompt.")
 		return
@@ -90,7 +90,7 @@ func _run() -> void:
 	move_press.position = move_screen
 	battle._input(move_press)
 	var expected_move: Vector2 = battle.call("_screen_to_world", move_screen)
-	if camera.position != camera_before_move or blue.ordered_center.distance_to(expected_move) > 2.0 or blue.target_squad != null or blue.command != BattleSquad.Command.ADVANCE:
+	if camera.position != camera_before_move or blue.ordered_center.distance_to(expected_move) > 2.0 or blue.target_squad != null or blue.command != BattleSquad.Command.GUARD:
 		_fail("Selected-squad drag panned the camera or failed to issue Move.")
 		return
 	var general: BattleUnit = battle.get("player_general")

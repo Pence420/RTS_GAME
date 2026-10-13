@@ -19,7 +19,7 @@ Main menu, battlefield HUD, and pause/army menu were rendered and inspected at 1
 - Archers recognize melee threats within 90 units and keep retreating until their retained threat is at least 120 units away. Nearby additional threats influence the escape direction; field bounds and body collisions still apply. Other archers do not trigger melee panic.
 - Fixed an existing movement bug: the attack branch reset an archer's speed every physics frame while firing and retreating, preventing acceleration. Retreat now preserves velocity and marks actual movement as chasing.
 
-Manual movement runs before tactical decisions. Hold and Defend do not retreat or chase. Focus candidate lists remain restricted to the selected enemy squad. Routing retains its existing morale rules.
+Manual movement runs before tactical decisions. The later direct-orders pass replaced the player command panel with Defend and Full Attack stances. Default Guard and Defend can counter nearby enemies within a limited leash and return to their anchors. Internal Hold still remains stationary. Explicit attack candidate lists remain restricted to the selected squad or general. See direct-orders-and-stances.md for the current controls. Routing retains its existing morale rules.
 
 ## Enemy army decisions
 

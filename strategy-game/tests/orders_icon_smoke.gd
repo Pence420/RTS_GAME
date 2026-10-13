@@ -20,6 +20,8 @@ func _run() -> void:
 	var icons := {}
 	for group in ["FormationButtons", "CommandButtons", "PointerButtons"]:
 		for button in battle.get_node("CanvasLayer/" + group).get_children():
+			if not button.visible:
+				continue
 			if button.icon == null or not button.text.is_empty() or button.tooltip_text.is_empty():
 				_fail("An icon order is missing its image or explanatory tooltip: " + button.name)
 				return
@@ -30,12 +32,15 @@ func _run() -> void:
 				_fail("Different actions share an ambiguous icon")
 				return
 			icons[button.icon.resource_path] = true
-	var squad: BattleSquad = battle.player_squads[0]
-	battle.get_node("CanvasLayer/CommandButtons/Hold").emit_signal("pressed")
-	if squad.command != BattleSquad.Command.HOLD:
-		_fail("Hold icon lost its command binding")
+	if icons.size() != 9:
+		_fail("Orders tray should expose four formations, two stances, and three touchpad alternatives")
 		return
-	print("Order icons passed: 12 unique icons, tooltips, laptop click targets, and live command binding.")
+	var squad: BattleSquad = battle.player_squads[0]
+	battle.get_node("CanvasLayer/CommandButtons/Defend").emit_signal("pressed")
+	if squad.stance != BattleSquad.Stance.DEFEND:
+		_fail("Defend icon lost its stance binding")
+		return
+	print("Order icons passed: 9 unique icons, tooltips, laptop click targets, and live command binding.")
 	quit()
 
 

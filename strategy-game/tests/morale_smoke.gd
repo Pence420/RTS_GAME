@@ -49,7 +49,7 @@ func _run() -> void:
 			_fail("Every soldier in a routing squad must flee.")
 			return
 	battle.call("_select_at", reserve.units[0].global_position)
-	var hold_button: Button = battle.get_node("CanvasLayer/CommandButtons/Hold")
+	var hold_button: Button = battle.get_node("CanvasLayer/CommandButtons/Defend")
 	if not hold_button.disabled:
 		_fail("Routing squads must not accept new commands.")
 		return

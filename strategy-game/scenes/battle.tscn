@@ -486,7 +486,7 @@ offset_bottom = -166.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.76, 0.75, 0.6, 1)
 theme_override_font_sizes/font_size = 10
-text = "COMMAND"
+text = "STANCE"
 
 horizontal_alignment = 1
 
@@ -611,41 +611,15 @@ anchor_left = 0.5
 anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = -131.0
+offset_left = -50.0
 offset_top = -162.0
-offset_right = 131.0
+offset_right = 50.0
 offset_bottom = -116.0
 theme_override_constants/separation = 8
 
-[node name="Hold" type="Button" parent="CanvasLayer/CommandButtons"]
-custom_minimum_size = Vector2(108, 38)
-theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
-theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
-tooltip_text = "Stay in place and attack only enemies in melee range."
-toggle_mode = true
-text = "Hold"
 
-[node name="Advance" type="Button" parent="CanvasLayer/CommandButtons"]
-custom_minimum_size = Vector2(118, 38)
-theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
-theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
-tooltip_text = "Chase nearby enemies. Right-click the ground to move."
-toggle_mode = true
-text = "Advance"
 
-[node name="Charge" type="Button" parent="CanvasLayer/CommandButtons"]
+[node name="FullAttack" type="Button" parent="CanvasLayer/CommandButtons"]
 custom_minimum_size = Vector2(108, 38)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
@@ -657,7 +631,7 @@ theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
 tooltip_text = "Rush the nearest enemy squad with extra speed and a brief attack bonus."
 toggle_mode = true
-text = "Charge"
+text = "Full Attack"
 
 [node name="Defend" type="Button" parent="CanvasLayer/CommandButtons"]
 custom_minimum_size = Vector2(108, 38)
@@ -673,19 +647,6 @@ tooltip_text = "Hold ground and take less damage. Right-click to reposition slow
 toggle_mode = true
 text = "Defend"
 
-[node name="FocusTarget" type="Button" parent="CanvasLayer/CommandButtons"]
-custom_minimum_size = Vector2(138, 38)
-theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
-theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
-tooltip_text = "Then left-click a red squad to focus attacks on it. Right-click also works."
-toggle_mode = true
-text = "Focus Target"
 
 [node name="GameMenu" parent="CanvasLayer" instance=ExtResource("4_menu")]
 
