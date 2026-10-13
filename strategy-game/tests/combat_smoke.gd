@@ -10,6 +10,7 @@ func _run() -> void:
 	root.add_child(battle)
 	var player_squads: Array = battle.get("player_squads")
 	var enemy_squads: Array = battle.get("enemy_squads")
+	var enemy_reserve_start: Vector2 = enemy_squads[1].get_center()
 	if player_squads.size() != 4 or enemy_squads.size() != 4:
 		_fail("Expected four squads on each team.")
 		return
@@ -59,7 +60,7 @@ func _run() -> void:
 
 	for frame in range(120):
 		await physics_frame
-	if not enemy_squads[1].get_center().is_equal_approx(Vector2(1200, 600)):
+	if not enemy_squads[1].get_center().is_equal_approx(enemy_reserve_start):
 		_fail("Enemy reserve moved during deployment.")
 		return
 	battle.get_node("CanvasLayer/StartBattle").emit_signal("pressed")

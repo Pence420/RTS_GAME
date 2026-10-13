@@ -13,14 +13,16 @@ func _run() -> void:
 	var modes: HBoxContainer = battle.get_node_or_null("CanvasLayer/PointerButtons")
 	var zoom: HBoxContainer = battle.get_node_or_null("CanvasLayer/ZoomButtons")
 	var dock: Control = battle.get_node("CanvasLayer/BottomDock")
+	var tray: Control = battle.get_node("CanvasLayer/OrdersPanel")
 	if modes == null or zoom == null:
 		_fail("Touchpad action or zoom buttons are missing.")
 		return
 	if modes.get_node_or_null("Pan") != null:
 		_fail("Panning should work by dragging without selecting a Pan mode.")
 		return
-	if not dock.get_global_rect().encloses(modes.get_global_rect()) or not dock.get_global_rect().encloses(zoom.get_global_rect()):
-		_fail("Touchpad controls do not fit inside the dock.")
+	battle.get_node("CanvasLayer/OrdersToggle").emit_signal("pressed")
+	if not tray.visible or not tray.get_global_rect().encloses(modes.get_global_rect()) or not dock.get_global_rect().encloses(zoom.get_global_rect()):
+		_fail("Touchpad controls do not fit inside the Orders tray and dock.")
 		return
 	var blue: BattleSquad = battle.get("player_squads")[0]
 	var red: BattleSquad = battle.get("enemy_squads")[0]
@@ -66,6 +68,7 @@ func _run() -> void:
 	if not is_equal_approx(camera.zoom.x, first_zoom):
 		_fail("Zoom Out button did not restore the camera.")
 		return
+	battle.get_node("CanvasLayer/OrdersToggle").emit_signal("pressed")
 	blue.set_target(red, BattleSquad.Command.CHARGE)
 	var unit_screen: Vector2 = blue.units[0].get_global_transform_with_canvas().origin
 	var move_screen := unit_screen + Vector2(90, 38)

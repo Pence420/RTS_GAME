@@ -55,6 +55,7 @@ var hit_flash_timer := 0.0
 var shot_trace_timer := 0.0
 var shot_trace_end := Vector2.ZERO
 var attack_fx_timer := 0.0
+var idle_phase := 0
 
 @onready var visual_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -113,6 +114,7 @@ func _configure_visuals() -> void:
 	visual_sprite.flip_h = team == 1
 	if visual_sprite.visible:
 		visual_sprite.play(&"idle")
+		visual_sprite.set_frame_and_progress(idle_phase, float(idle_phase) / 3.0)
 
 
 func _process(delta: float) -> void:
@@ -146,6 +148,8 @@ func _update_visual_animation() -> void:
 	visual_sprite.offset = Vector2(0, -85.0 + (attack_foot_shift if wanted == &"attack" else 0.0))
 	if visual_sprite.animation != wanted or (wanted != &"attack" and not visual_sprite.is_playing()):
 		visual_sprite.play(wanted)
+		if wanted == &"idle":
+			visual_sprite.set_frame_and_progress(idle_phase, float(idle_phase) / 3.0)
 
 
 func move_to(point: Vector2) -> void:
@@ -209,7 +213,13 @@ func receive_damage(amount: float) -> void:
 		velocity = Vector2.ZERO
 		var effect := DEATH_EFFECT.new() as Node2D
 		effect.team = team
-		get_parent().add_child(effect)
+		effect.body_texture = visual_sprite.sprite_frames.get_frame_texture(visual_sprite.animation, visual_sprite.frame)
+		effect.body_scale = visual_sprite.scale
+		effect.body_offset = visual_sprite.offset
+		effect.body_flip_h = visual_sprite.flip_h
+		var world: Node = get_parent().get_parent() if get_parent() is BattleSquad else get_parent()
+		var ground: Node = world.get_node_or_null("GroundEffects")
+		(ground if ground != null else world).add_child(effect)
 		effect.global_position = global_position
 		died.emit(self)
 		queue_free()

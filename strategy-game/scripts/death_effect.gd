@@ -1,9 +1,40 @@
 extends Node2D
 
-const DURATION := 0.55
+const DURATION := 3.5
+const SPLASH_DURATION := 0.38
 
 var team := 0
 var remaining := DURATION
+var body_texture: Texture2D
+var body_scale := Vector2(0.18, 0.18)
+var body_offset := Vector2(0, -85)
+var body_flip_h := false
+var body: Sprite2D
+var stain := PackedVector2Array()
+var droplets: Array[Vector2] = []
+var fall_direction := 1.0
+
+
+func _ready() -> void:
+	var random := RandomNumberGenerator.new()
+	random.randomize()
+	fall_direction = -1.0 if team == 1 else 1.0
+	for index in range(15):
+		var angle := TAU * index / 15.0
+		var radius := random.randf_range(7.0, 14.0)
+		stain.append(Vector2(cos(angle) * radius, 8.0 + sin(angle) * radius * 0.42))
+	for index in range(7):
+		var angle := random.randf_range(-PI, 0.0)
+		droplets.append(Vector2(cos(angle) * random.randf_range(16.0, 35.0), sin(angle) * random.randf_range(22.0, 38.0)))
+	if body_texture != null:
+		body = Sprite2D.new()
+		body.texture = body_texture
+		body.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		body.scale = body_scale
+		body.offset = body_offset
+		body.flip_h = body_flip_h
+		add_child(body)
+	queue_redraw()
 
 
 func _process(delta: float) -> void:
@@ -11,21 +42,31 @@ func _process(delta: float) -> void:
 	if remaining <= 0.0:
 		queue_free()
 		return
+	var elapsed := DURATION - remaining
+	if body != null:
+		var fall := clampf(elapsed / 0.24, 0.0, 1.0)
+		body.rotation = fall_direction * fall * 1.22
+		body.position = Vector2(fall_direction * fall * 5.0, fall * 8.0)
+		body.modulate = Color(0.68, 0.65, 0.59, clampf(1.0 - maxf(0.0, elapsed - 0.25) / 0.45, 0.0, 1.0))
 	queue_redraw()
 
 
 func _draw() -> void:
-	var progress := 1.0 - remaining / DURATION
-	var alpha := remaining / DURATION
-	var dust := Color(0.77, 0.71, 0.55, alpha * 0.48)
-	draw_set_transform(Vector2(0, 8), 0.0, Vector2(1.4 + progress * 0.7, 0.45 + progress * 0.2))
-	draw_circle(Vector2.ZERO, 10.0, dust)
+	if stain.is_empty():
+		return
+	var elapsed := DURATION - remaining
+	var fade := clampf(remaining / 1.2, 0.0, 1.0)
+	var bloom := clampf(elapsed / 0.12, 0.0, 1.0)
+	var blood := Color("782e2d", fade * 0.82)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE * (0.55 + bloom * 0.45))
+	draw_colored_polygon(stain, blood)
 	draw_set_transform(Vector2.ZERO)
-	draw_circle(Vector2(-9 - progress * 11.0, -5 - progress * 5.0), 3.0 + progress * 3.0, dust)
-	draw_circle(Vector2(8 + progress * 9.0, -9 - progress * 3.0), 3.0 + progress * 2.0, dust)
-	var cloth := Color("4d8fb9") if team == 0 else Color("bf6b59")
-	cloth.a = alpha * 0.75
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(-3, 4), Vector2(6 + progress * 6.0, 4),
-		Vector2(8 + progress * 5.0, 9), Vector2(-4, 9)
-	]), cloth)
+	for index in range(droplets.size()):
+		var velocity := droplets[index]
+		var splash := minf(elapsed / SPLASH_DURATION, 1.0)
+		var spot := Vector2(velocity.x * splash, 8.0 + velocity.y * splash + 32.0 * splash * splash)
+		var radius := 1.2 + float(index % 3) * 0.5
+		var drop_color := Color("a54b3e", fade * (0.9 if splash < 1.0 else 0.65))
+		draw_set_transform(spot, velocity.angle(), Vector2(1.5 if splash < 1.0 else 1.0, 0.65))
+		draw_circle(Vector2.ZERO, radius, drop_color, true, -1, true)
+		draw_set_transform(Vector2.ZERO)

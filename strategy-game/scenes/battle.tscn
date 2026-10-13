@@ -1,24 +1,29 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle.gd" id="1_battle"]
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="2_camera"]
 [ext_resource type="Script" path="res://scripts/enemy_ai.gd" id="3_enemy_ai"]
 [ext_resource type="PackedScene" path="res://scenes/game_menu.tscn" id="4_menu"]
 
+[ext_resource type="Script" path="res://scripts/battle_hud.gd" id="5_hud"]
+[ext_resource type="Script" path="res://scripts/hud_frame.gd" id="6_frame"]
+[ext_resource type="Texture2D" path="res://assets/ui/menu.svg" id="7_menu_icon"]
+[ext_resource type="Texture2D" path="res://assets/ui/orders.svg" id="8_orders_icon"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
-bg_color = Color(0.12, 0.16, 0.145, 1)
+bg_color = Color(0.17, 0.2, 0.15, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.28, 0.36, 0.38, 1)
+border_color = Color(0.45, 0.47, 0.36, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
-bg_color = Color(0.2, 0.25, 0.21, 1)
+bg_color = Color(0.26, 0.3, 0.22, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -42,7 +47,7 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_disabled"]
-bg_color = Color(0.13, 0.17, 0.18, 1)
+bg_color = Color(0.14, 0.16, 0.13, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
@@ -62,25 +67,33 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
-bg_color = Color(0.13, 0.175, 0.15, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.24, 0.31, 0.32, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
+[sub_resource type="StyleBoxFlat" id="Strength_background"]
+bg_color = Color(0.1, 0.13, 0.1, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="Strength_blue"]
+bg_color = Color(0.37, 0.56, 0.67, 1)
+corner_radius_top_left = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="Strength_red"]
+bg_color = Color(0.66, 0.35, 0.29, 1)
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
 
 [node name="Battle" type="Node2D"]
 y_sort_enabled = true
 texture_filter = 2
 script = ExtResource("1_battle")
 
+[node name="GroundEffects" type="Node2D" parent="."]
+
+
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(800, 600)
+position = Vector2(800, 450)
 zoom = Vector2(0.8, 0.8)
 script = ExtResource("2_camera")
 
@@ -88,173 +101,368 @@ script = ExtResource("2_camera")
 script = ExtResource("3_enemy_ai")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+script = ExtResource("5_hud")
 
-[node name="TopBar" type="ColorRect" parent="CanvasLayer"]
-anchor_right = 1.0
-offset_bottom = 66.0
-color = Color(0.07, 0.105, 0.095, 1)
-
-[node name="TopRule" type="ColorRect" parent="CanvasLayer"]
-anchor_right = 1.0
-offset_top = 64.0
-offset_bottom = 66.0
-mouse_filter = 2
-color = Color(0.86, 0.69, 0.39, 1)
-
-[node name="GameTitle" type="Label" parent="CanvasLayer"]
-offset_left = 18.0
-offset_top = 8.0
-offset_right = 300.0
-offset_bottom = 40.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.95, 0.91, 0.83, 1)
-theme_override_font_sizes/font_size = 25
-text = "BATTLEFIELD"
-
-[node name="GameSubtitle" type="Label" parent="CanvasLayer"]
-offset_left = 19.0
-offset_top = 38.0
-offset_right = 290.0
+[node name="TopBar" type="Control" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -390.0
+offset_top = 14.0
+offset_right = 390.0
 offset_bottom = 58.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.62, 0.69, 0.68, 1)
-theme_override_font_sizes/font_size = 11
-text = "TACTICAL BATTLE SIMULATOR"
-
-[node name="Phase" type="Label" parent="CanvasLayer"]
-offset_left = 344.0
-offset_top = 21.0
-offset_right = 500.0
-offset_bottom = 47.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.88, 0.71, 0.42, 1)
-theme_override_font_sizes/font_size = 17
-text = "DEPLOYMENT"
+script = ExtResource("6_frame")
 
 [node name="BlueCount" type="Label" parent="CanvasLayer"]
-offset_left = 535.0
-offset_top = 20.0
-offset_right = 690.0
-offset_bottom = 50.0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -364.0
+offset_top = 24.0
+offset_right = -262.0
+offset_bottom = 47.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.5, 0.69, 0.91, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.68, 0.82, 0.89, 1)
+theme_override_font_sizes/font_size = 13
 text = "BLUE  40"
 
 [node name="RedCount" type="Label" parent="CanvasLayer"]
-offset_left = 700.0
-offset_top = 20.0
-offset_right = 855.0
-offset_bottom = 50.0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 262.0
+offset_top = 24.0
+offset_right = 364.0
+offset_bottom = 47.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.93, 0.53, 0.49, 1)
-theme_override_font_sizes/font_size = 18
-text = "RED  40"
-
-[node name="BottomDock" type="ColorRect" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -156.0
-color = Color(0.07, 0.105, 0.095, 0.98)
-
-[node name="BottomRule" type="ColorRect" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -156.0
-offset_bottom = -154.0
-mouse_filter = 2
-color = Color(0.86, 0.69, 0.39, 1)
-
-[node name="SelectedCard" type="Panel" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 14.0
-offset_top = -145.0
-offset_right = 400.0
-offset_bottom = -11.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_card")
-
-[node name="SelectedTitle" type="Label" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 28.0
-offset_top = -139.0
-offset_right = 366.0
-offset_bottom = -120.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.88, 0.71, 0.42, 1)
+theme_override_colors/font_color = Color(0.9, 0.66, 0.56, 1)
 theme_override_font_sizes/font_size = 13
-text = "SELECTED"
+text = "RED  40"
+horizontal_alignment = 1
 
-[node name="Status" type="Label" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 28.0
-offset_top = -116.0
-offset_right = 386.0
-offset_bottom = -14.0
+[node name="BlueStrength" type="ProgressBar" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -254.0
+offset_top = 31.0
+offset_right = -42.0
+offset_bottom = 40.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.89, 0.92, 0.88, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_styles/background = SubResource("Strength_background")
+theme_override_styles/fill = SubResource("Strength_blue")
+max_value = 40.0
+value = 40.0
+show_percentage = false
+
+[node name="RedStrength" type="ProgressBar" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 42.0
+offset_top = 31.0
+offset_right = 254.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("Strength_background")
+theme_override_styles/fill = SubResource("Strength_red")
+max_value = 40.0
+value = 40.0
+show_percentage = false
+fill_mode = 1
+
+[node name="Phase" type="Label" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -42.0
+offset_top = 24.0
+offset_right = 42.0
+offset_bottom = 47.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.76, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 9
+text = "DEPLOYMENT"
+horizontal_alignment = 1
 
 [node name="StartBattle" type="Button" parent="CanvasLayer"]
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -220.0
-offset_top = 11.0
+offset_left = -172.0
+offset_top = 17.0
 offset_right = -18.0
-offset_bottom = 54.0
-theme_override_colors/font_color = Color(0.12, 0.16, 0.17, 1)
-theme_override_colors/font_hover_color = Color(0.1, 0.14, 0.15, 1)
-theme_override_font_sizes/font_size = 17
+offset_bottom = 55.0
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+theme_override_colors/font_color = Color(0.15, 0.18, 0.13, 1)
 theme_override_styles/normal = SubResource("StyleBoxFlat_primary")
 theme_override_styles/hover = SubResource("StyleBoxFlat_primary_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_primary_hover")
 text = "START BATTLE"
 
 [node name="MenuButton" type="Button" parent="CanvasLayer"]
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -326.0
-offset_top = 11.0
-offset_right = -230.0
-offset_bottom = 54.0
-theme_override_colors/font_color = Color(0.89, 0.92, 0.88, 1)
-theme_override_font_sizes/font_size = 16
+offset_left = 18.0
+offset_top = 17.0
+offset_right = 60.0
+offset_bottom = 55.0
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-text = "MENU"
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+icon = ExtResource("7_menu_icon")
+icon_alignment = 1
+tooltip_text = "Menu · squad composition and unit guide"
+
+[node name="BottomDock" type="Control" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -504.0
+offset_top = -94.0
+offset_right = 504.0
+offset_bottom = -12.0
+script = ExtResource("6_frame")
+variant = 1
+
+[node name="GeneralSlot" type="Button" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -480.0
+offset_top = -78.0
+offset_right = -424.0
+offset_bottom = -24.0
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+toggle_mode = true
+icon_alignment = 1
+expand_icon = true
+theme_override_constants/icon_max_width = 33
+
+[node name="SquadSlots" type="HBoxContainer" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -412.0
+offset_top = -78.0
+offset_right = -164.0
+offset_bottom = -24.0
+theme_override_constants/separation = 12
+
+[node name="A" type="Button" parent="CanvasLayer/SquadSlots"]
+custom_minimum_size = Vector2(52, 54)
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+toggle_mode = true
+icon_alignment = 1
+expand_icon = true
+theme_override_constants/icon_max_width = 33
+
+[node name="B" type="Button" parent="CanvasLayer/SquadSlots"]
+custom_minimum_size = Vector2(52, 54)
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+toggle_mode = true
+icon_alignment = 1
+expand_icon = true
+theme_override_constants/icon_max_width = 33
+
+[node name="C" type="Button" parent="CanvasLayer/SquadSlots"]
+custom_minimum_size = Vector2(52, 54)
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+toggle_mode = true
+icon_alignment = 1
+expand_icon = true
+theme_override_constants/icon_max_width = 33
+
+[node name="D" type="Button" parent="CanvasLayer/SquadSlots"]
+custom_minimum_size = Vector2(52, 54)
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+toggle_mode = true
+icon_alignment = 1
+expand_icon = true
+theme_override_constants/icon_max_width = 33
+
+[node name="Status" type="Label" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = -63.0
+offset_right = 260.0
+offset_bottom = -23.0
+mouse_filter = 1
+theme_override_colors/font_color = Color(0.9, 0.88, 0.77, 1)
+theme_override_font_sizes/font_size = 14
+text = ""
+horizontal_alignment = 1
+
+[node name="OrdersToggle" type="Button" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 276.0
+offset_top = -69.0
+offset_right = 372.0
+offset_bottom = -29.0
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+toggle_mode = true
+text = "Orders"
+icon = ExtResource("8_orders_icon")
+tooltip_text = "Formations, combat orders, and touchpad actions"
+
+[node name="ZoomButtons" type="HBoxContainer" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 386.0
+offset_top = -67.0
+offset_right = 480.0
+offset_bottom = -31.0
+theme_override_constants/separation = 6
+
+[node name="ZoomOut" type="Button" parent="CanvasLayer/ZoomButtons"]
+custom_minimum_size = Vector2(44, 36)
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+text = "−"
+tooltip_text = "Zoom out"
+
+[node name="ZoomIn" type="Button" parent="CanvasLayer/ZoomButtons"]
+custom_minimum_size = Vector2(44, 36)
+theme_override_colors/font_color = Color(0.88, 0.86, 0.75, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.45, 0.37, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
+text = "+"
+tooltip_text = "Zoom in"
+
+[node name="OrdersPanel" type="Control" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -384.0
+offset_top = -268.0
+offset_right = 384.0
+offset_bottom = -104.0
+visible = false
+script = ExtResource("6_frame")
+variant = 2
 
 [node name="FormationTitle" type="Label" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 422.0
-offset_top = -144.0
-offset_right = 670.0
-offset_bottom = -125.0
+offset_left = -368.0
+offset_top = -256.0
+offset_right = 48.0
+offset_bottom = -238.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.88, 0.71, 0.42, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.76, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
 text = "FORMATION"
 
-[node name="FormationButtons" type="HBoxContainer" parent="CanvasLayer"]
+[node name="PointerTitle" type="Label" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 422.0
-offset_top = -121.0
-offset_right = 834.0
-offset_bottom = -85.0
+offset_left = 62.0
+offset_top = -256.0
+offset_right = 368.0
+offset_bottom = -238.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.76, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "TOUCHPAD"
+
+[node name="CommandTitle" type="Label" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -368.0
+offset_top = -184.0
+offset_right = 368.0
+offset_bottom = -166.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.76, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "COMMAND"
+
+[node name="FormationButtons" type="HBoxContainer" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -368.0
+offset_top = -232.0
+offset_right = 48.0
+offset_bottom = -196.0
 theme_override_constants/separation = 6
 
 [node name="Line" type="Button" parent="CanvasLayer/FormationButtons"]
 custom_minimum_size = Vector2(84, 36)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -267,7 +475,7 @@ text = "Line"
 custom_minimum_size = Vector2(92, 36)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -280,7 +488,7 @@ text = "Column"
 custom_minimum_size = Vector2(122, 36)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -293,7 +501,7 @@ text = "Shield Wall"
 custom_minimum_size = Vector2(92, 36)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -302,32 +510,22 @@ theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
 toggle_mode = true
 text = "Wedge"
 
-[node name="PointerTitle" type="Label" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 844.0
-offset_top = -144.0
-offset_right = 1100.0
-offset_bottom = -125.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.88, 0.71, 0.42, 1)
-theme_override_font_sizes/font_size = 13
-text = "TOOLS"
-
 [node name="PointerButtons" type="HBoxContainer" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 844.0
-offset_top = -121.0
-offset_right = 1134.0
-offset_bottom = -85.0
+offset_left = 62.0
+offset_top = -232.0
+offset_right = 368.0
+offset_bottom = -196.0
 theme_override_constants/separation = 6
 
 [node name="Select" type="Button" parent="CanvasLayer/PointerButtons"]
 custom_minimum_size = Vector2(90, 36)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -341,7 +539,7 @@ text = "Select"
 custom_minimum_size = Vector2(90, 36)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -355,7 +553,7 @@ text = "Move"
 custom_minimum_size = Vector2(90, 36)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -365,32 +563,22 @@ tooltip_text = "After selecting a blue squad, left-click a red squad to focus at
 toggle_mode = true
 text = "Target"
 
-[node name="CommandTitle" type="Label" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 422.0
-offset_top = -78.0
-offset_right = 670.0
-offset_bottom = -59.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.88, 0.71, 0.42, 1)
-theme_override_font_sizes/font_size = 13
-text = "COMMAND"
-
 [node name="CommandButtons" type="HBoxContainer" parent="CanvasLayer"]
+anchor_left = 0.5
+anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 422.0
-offset_top = -54.0
-offset_right = 1028.0
-offset_bottom = -16.0
+offset_left = -368.0
+offset_top = -160.0
+offset_right = 368.0
+offset_bottom = -122.0
 theme_override_constants/separation = 6
 
 [node name="Hold" type="Button" parent="CanvasLayer/CommandButtons"]
 custom_minimum_size = Vector2(108, 38)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -404,7 +592,7 @@ text = "Hold"
 custom_minimum_size = Vector2(118, 38)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -418,7 +606,7 @@ text = "Advance"
 custom_minimum_size = Vector2(108, 38)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -432,7 +620,7 @@ text = "Charge"
 custom_minimum_size = Vector2(108, 38)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -446,7 +634,7 @@ text = "Defend"
 custom_minimum_size = Vector2(138, 38)
 theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
 theme_override_colors/font_disabled_color = Color(0.42, 0.47, 0.47, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
@@ -455,47 +643,6 @@ theme_override_styles/disabled = SubResource("StyleBoxFlat_button_disabled")
 tooltip_text = "Then left-click a red squad to focus attacks on it. Right-click also works."
 toggle_mode = true
 text = "Focus Target"
-
-[node name="ZoomTitle" type="Label" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 1038.0
-offset_top = -78.0
-offset_right = 1134.0
-offset_bottom = -59.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.88, 0.71, 0.42, 1)
-theme_override_font_sizes/font_size = 13
-text = "ZOOM"
-
-[node name="ZoomButtons" type="HBoxContainer" parent="CanvasLayer"]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 1038.0
-offset_top = -54.0
-offset_right = 1134.0
-offset_bottom = -16.0
-theme_override_constants/separation = 6
-
-[node name="ZoomOut" type="Button" parent="CanvasLayer/ZoomButtons"]
-custom_minimum_size = Vector2(45, 38)
-theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
-theme_override_font_sizes/font_size = 21
-theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-tooltip_text = "Zoom out"
-text = "−"
-
-[node name="ZoomIn" type="Button" parent="CanvasLayer/ZoomButtons"]
-custom_minimum_size = Vector2(45, 38)
-theme_override_colors/font_color = Color(0.84, 0.88, 0.85, 1)
-theme_override_font_sizes/font_size = 21
-theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-tooltip_text = "Zoom in"
-text = "+"
 
 [node name="GameMenu" parent="CanvasLayer" instance=ExtResource("4_menu")]
 

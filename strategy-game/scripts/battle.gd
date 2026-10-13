@@ -57,11 +57,13 @@ var battle_result := ""
 ]
 @onready var zoom_in_button: Button = $CanvasLayer/ZoomButtons/ZoomIn
 @onready var zoom_out_button: Button = $CanvasLayer/ZoomButtons/ZoomOut
-@onready var bottom_dock: Control = $CanvasLayer/BottomDock
+@onready var hud: CanvasLayer = $CanvasLayer
 
 
 func _ready() -> void:
 	get_window().min_size = Vector2i(1152, 648)
+	hud.squad_chosen.connect(_select_squad)
+	hud.general_chosen.connect(_on_hud_general_selected)
 	for index in range(formation_buttons.size()):
 		formation_buttons[index].pressed.connect(_on_formation_pressed.bind(index))
 	for index in range(command_buttons.size()):
@@ -79,16 +81,17 @@ func _ready() -> void:
 	game_menu.unit_type_changed.connect(_on_menu_unit_type_changed)
 	restart_button.pressed.connect(_restart_battle)
 	$CanvasLayer/ResultOverlay/Center/Content/MainMenuButton.pressed.connect(_return_to_main_menu)
-	_spawn_squad(0, "Blue A", BattleUnit.UnitType.SWORDSMAN, Vector2(630, 380))
-	_spawn_squad(0, "Blue B", BattleUnit.UnitType.SPEARMAN, Vector2(400, 600))
-	_spawn_squad(0, "Blue C", BattleUnit.UnitType.AXEMAN, Vector2(570, 470))
-	_spawn_squad(0, "Blue D", BattleUnit.UnitType.ARCHER, Vector2(300, 760))
-	_spawn_squad(1, "Red A", BattleUnit.UnitType.SWORDSMAN, Vector2(970, 380))
-	_spawn_squad(1, "Red B", BattleUnit.UnitType.SPEARMAN, Vector2(1200, 600))
-	_spawn_squad(1, "Red C", BattleUnit.UnitType.AXEMAN, Vector2(1030, 470))
-	_spawn_squad(1, "Red D", BattleUnit.UnitType.ARCHER, Vector2(1300, 760))
-	player_general = _spawn_general(0, Vector2(460, 440))
-	enemy_general = _spawn_general(1, Vector2(1140, 440))
+	_spawn_squad(0, "Blue A", BattleUnit.UnitType.SWORDSMAN, Vector2(630, 260))
+	_spawn_squad(0, "Blue B", BattleUnit.UnitType.SPEARMAN, Vector2(400, 400))
+	_spawn_squad(0, "Blue C", BattleUnit.UnitType.AXEMAN, Vector2(570, 540))
+	_spawn_squad(0, "Blue D", BattleUnit.UnitType.ARCHER, Vector2(300, 690))
+	_spawn_squad(1, "Red A", BattleUnit.UnitType.SWORDSMAN, Vector2(970, 260))
+	_spawn_squad(1, "Red B", BattleUnit.UnitType.SPEARMAN, Vector2(1200, 400))
+	_spawn_squad(1, "Red C", BattleUnit.UnitType.AXEMAN, Vector2(1030, 540))
+	_spawn_squad(1, "Red D", BattleUnit.UnitType.ARCHER, Vector2(1300, 690))
+	player_general = _spawn_general(0, Vector2(460, 300))
+	enemy_general = _spawn_general(1, Vector2(1140, 300))
+	hud.bind_army(player_squads, player_general)
 	for squad in player_squads:
 		squad.set_general(player_general)
 	for squad in enemy_squads:
@@ -126,7 +129,18 @@ func _on_menu_unit_type_changed(index: int, unit_type: int) -> void:
 func _on_menu_squad_selected(index: int) -> void:
 	if index < 0 or index >= player_squads.size():
 		return
-	var squad := player_squads[index]
+	_select_squad(player_squads[index])
+	_close_menu()
+
+
+func _on_hud_general_selected() -> void:
+	if is_instance_valid(player_general) and player_general.is_alive():
+		_select_at(player_general.global_position)
+
+
+func _select_squad(squad: BattleSquad) -> void:
+	if not is_instance_valid(squad) or squad.routing or squad.units.is_empty():
+		return
 	if selected_squad != null:
 		selected_squad.set_selected(false)
 	if selected_general != null:
@@ -137,7 +151,6 @@ func _on_menu_squad_selected(index: int) -> void:
 	_set_pointer_mode(PointerMode.SELECT)
 	_update_formation_buttons()
 	_update_command_buttons()
-	_close_menu()
 
 
 func _start_battle() -> void:
@@ -223,6 +236,7 @@ func _spawn_squad(team: int, squad_id: String, unit_type: int, start_position: V
 	squad.squad_id = squad_id
 	squad.unit_type = unit_type
 	squad.position = start_position
+	squad.z_index = 1
 	add_child(squad)
 	squad.roster_changed.connect(_on_soldier_removed)
 	squad.health_changed.connect(_on_squad_health_changed)
@@ -243,6 +257,7 @@ func _spawn_general(team: int, start_position: Vector2) -> BattleUnit:
 	general.damage = 10.0
 	general.armor = 3.0
 	general.position = start_position
+	general.z_index = 1
 	add_child(general)
 	general.set_command(BattleUnit.Command.HOLD)
 	general.died.connect(_on_general_died)
@@ -325,35 +340,34 @@ func _update_status() -> void:
 	phase_label.text = "BATTLE" if battle_started else "DEPLOYMENT"
 	blue_count_label.text = "BLUE  %02d" % blue_count
 	red_count_label.text = "RED  %02d" % red_count
-	var detail := "Select a blue squad\nDrag empty ground to pan."
+	var detail := "Choose a squad\nDrag empty ground to pan"
+	var tooltip := "Select a blue squad or use a portrait below.\nHold and drag the selected squad to move.\nDrag empty ground to pan. Orders contains alternate click controls."
 	if selected_general != null:
-		detail = "GENERAL\nHP %d/%d\nAura  +10 morale  /  +5%% damage" % [roundi(selected_general.current_hp), roundi(selected_general.max_hp)]
+		detail = "General\nHP %d/%d · Rally aura" % [roundi(selected_general.current_hp), roundi(selected_general.max_hp)]
+		tooltip = "General aura: +10 morale and +5% damage.\nHold and drag to reposition."
 		if pointer_mode == PointerMode.MOVE:
-			detail += "\nLeft-click destination to move"
+			detail = "General\nLeft-click destination to move"
 	elif selected_squad != null:
-		var order_detail := "Hold + drag squad to move"
+		var order_detail := "%d/10 · HP %d%% · %s" % [selected_squad.units.size(), roundi(selected_squad.get_health_ratio() * 100.0), selected_squad.get_morale_state()]
 		if pointer_mode == PointerMode.MOVE:
 			order_detail = "Left-click destination to move"
 		elif pointer_mode == PointerMode.TARGET or pending_focus_target:
 			order_detail = "Left-click a red squad to focus"
 		elif selected_squad.target_squad != null:
 			order_detail = "%s  →  %s" % [selected_squad.get_command_name(), selected_squad.target_squad.squad_id]
-		detail = "%s  /  %s\n%d/10 soldiers    HP %d%%\nMorale %d  ·  %s\n%s" % [
-			selected_squad.squad_id,
-			selected_squad.get_unit_type_name(),
-			selected_squad.units.size(),
-			roundi(selected_squad.get_health_ratio() * 100.0),
-			roundi(selected_squad.get_effective_morale()),
-			selected_squad.get_morale_state(),
-			order_detail
-		]
+		detail = "%s · %s\n%s" % [selected_squad.squad_id, selected_squad.get_unit_type_name(), order_detail]
+		tooltip = "Morale %d · %s\n%s · %s\nHold and drag this squad to move." % [roundi(selected_squad.get_effective_morale()), selected_squad.get_morale_state(), selected_squad.get_command_name(), selected_squad.get_formation_name()]
 	status_label.text = detail
+	status_label.tooltip_text = tooltip
+	hud.refresh(selected_squad, selected_general, blue_count, red_count)
 
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		if game_menu.visible:
 			_close_menu()
+		elif hud.orders_open:
+			hud.set_orders_open(false)
 		elif not result_overlay.visible:
 			_open_menu()
 		return
@@ -402,11 +416,11 @@ func _is_selected_at(point: Vector2) -> bool:
 
 
 func _is_gameplay_point(point: Vector2) -> bool:
-	return point.x >= 0.0 and point.x < get_viewport_rect().size.x and point.y >= 66.0 and point.y < bottom_dock.get_global_rect().position.y and not result_overlay.visible and not game_menu.visible
+	return Rect2(Vector2.ZERO, get_viewport_rect().size).has_point(point) and not hud.blocks_point(point) and not result_overlay.visible and not game_menu.visible
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and (selected_squad != null or selected_general != null):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and _is_gameplay_point(event.position) and (selected_squad != null or selected_general != null):
 		_issue_right_click(get_global_mouse_position())
 
 

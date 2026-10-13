@@ -9,7 +9,7 @@ signal routed(squad: BattleSquad)
 const UNIT_SCENE: PackedScene = preload("res://scenes/unit.tscn")
 const SOLDIERS_PER_SQUAD := 10
 const PICK_RADIUS := 22.0
-const SLOT_SPACING := Vector2(32, 36)
+const SLOT_SPACING := Vector2(42, 50)
 const CASUALTY_MORALE_LOSS := 12.0
 const GENERAL_MORALE_BONUS := 10.0
 
@@ -42,6 +42,7 @@ func _ready() -> void:
 		var unit := UNIT_SCENE.instantiate() as BattleUnit
 		var slot := _slot_for(index)
 		unit.team = team
+		unit.idle_phase = index % 3
 		unit.configure_type(unit_type)
 		unit.position = slot
 		add_child(unit)
@@ -65,6 +66,12 @@ func _process(delta: float) -> void:
 func move_to(center: Vector2) -> void:
 	if routing:
 		return
+	var minimum := Vector2.ZERO
+	var maximum := Vector2.ZERO
+	for unit in units:
+		minimum = minimum.min(slots[unit])
+		maximum = maximum.max(slots[unit])
+	center = center.clamp(BattleUnit.FIELD_BOUNDS.position - minimum, BattleUnit.FIELD_BOUNDS.end - Vector2.ONE - maximum)
 	ordered_center = center
 	for unit in units:
 		unit.move_to(center + slots[unit])

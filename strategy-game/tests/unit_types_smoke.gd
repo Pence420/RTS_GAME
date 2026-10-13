@@ -30,12 +30,12 @@ func _run() -> void:
 		if types.size() != 4:
 			_fail("Army must contain four distinct unit types.")
 			return
-	var command_panel: Control = battle.get_node("CanvasLayer/CommandButtons")
-	var command_rect := Rect2(command_panel.global_position, command_panel.size).grow(18.0)
+	var dock: Control = battle.get_node("CanvasLayer/BottomDock")
+	var command_rect := dock.get_global_rect().grow(8.0)
 	for squad in blue + red:
 		for unit in squad.units:
 			if command_rect.has_point(unit.get_global_transform_with_canvas().origin):
-				_fail("A starting soldier overlaps the command panel.")
+				_fail("A starting soldier overlaps the visible bottom dock.")
 				return
 	for squad in blue:
 		battle.call("_select_at", squad.units[0].global_position)

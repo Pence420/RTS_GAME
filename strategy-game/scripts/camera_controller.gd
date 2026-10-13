@@ -4,8 +4,8 @@ const PAN_SPEED := 550.0
 const MIN_ZOOM := 0.6
 const MAX_ZOOM := 2.0
 const FIELD_SIZE := Vector2(1600, 900)
-const HUD_TOP := 66.0
-const HUD_BOTTOM := 156.0
+const HUD_TOP := 60.0
+const HUD_BOTTOM := 94.0
 
 var dragging := false
 

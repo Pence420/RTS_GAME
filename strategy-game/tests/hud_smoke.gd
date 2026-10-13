@@ -36,15 +36,20 @@ func _run() -> void:
 			if screen_y < safe_top or screen_y > safe_bottom:
 				_fail("Starting soldier is hidden behind HUD: %s at %.1f outside %.1f–%.1f" % [squad.squad_id, screen_y, safe_top, safe_bottom])
 				return
+	var tray: Control = battle.get_node("CanvasLayer/OrdersPanel")
+	if tray.visible:
+		_fail("Orders tray should be hidden until requested.")
+		return
+	battle.get_node("CanvasLayer/OrdersToggle").emit_signal("pressed")
 	for panel_name in ["FormationButtons", "CommandButtons"]:
 		var panel: Control = battle.get_node("CanvasLayer/" + panel_name)
-		if not dock.get_global_rect().encloses(panel.get_global_rect()):
-			_fail(panel_name + " extends outside the bottom dock.")
+		if not panel.visible or not tray.get_global_rect().encloses(panel.get_global_rect()):
+			_fail(panel_name + " extends outside the Orders tray.")
 			return
 	root.size = Vector2i(1440, 900)
 	await process_frame
-	if not dock.get_global_rect().encloses(battle.get_node("CanvasLayer/CommandButtons").get_global_rect()):
-		_fail("Command panel moves outside the dock in a larger window.")
+	if not tray.get_global_rect().encloses(battle.get_node("CanvasLayer/CommandButtons").get_global_rect()):
+		_fail("Command panel moves outside the Orders tray in a larger window.")
 		return
 	root.size = Vector2i(1152, 648)
 	await process_frame
